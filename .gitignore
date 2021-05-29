@@ -7,3 +7,9 @@
 /test/
 /accounts.json
 /truffle-config.js
+
+node_modules
+
+#Hardhat files
+cache
+artifacts
