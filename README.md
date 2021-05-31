@@ -29,7 +29,7 @@ Example of `secrets.json`:
 > - timelockAddress is required for running `scripts/timelock.js`
 > - masterChefAddress is required for running `scripts/timelock.js` and `scripts/masterchef.js`
 
-- npm run deploy (deploy goong, masterchef, multicall and timelock)
+- `npm run deploy` (deploy goong, masterchef, multicall and timelock)
 
 ## Deployed Contracts / Hash
 
