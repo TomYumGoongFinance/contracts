@@ -72,12 +72,12 @@ async function deployTimelock() {
  * 3. Multicall
  * 4. Timelock
  */
-// deployGoongToken()
-//   .then(verifyContract)
-deployMasterChef("0xFD348C0Fe6E5b19f520F4E3bb99Fb142606BCe8B")
+deployGoongToken()
   .then(verifyContract)
-  //   .then(deployMulticall)
-  //   .then(verifyContract)
+  .then(deployMasterChef)
+  .then(verifyContract)
+  .then(deployMulticall)
+  .then(verifyContract)
   .then(deployTimelock)
   .then(verifyContract)
   .then(() => process.exit(0))

@@ -5,6 +5,7 @@ const fs = require('fs')
  * Make sure the data below is correct before running
  */
 const { timelockAddress, masterchefAddress } = require('../secrets.json')
+
 async function queueTransaction(args) {
   const Timelock = await ethers.getContractFactory("Timelock");
   const timelock = await Timelock.attach(timelockAddress)
