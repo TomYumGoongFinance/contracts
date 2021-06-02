@@ -1,14 +1,20 @@
 // BSC Testnet
 const FACTORY_ADDRESS = "0x6725f303b657a9451d8ba641348b6761a6cc7a17"
 const INIT_CODE_HASH = "0xd0d4c4cd0848c93cb4fd1f498d7013ee6bfb25783ea21593d5834f5d250ece66"
+
+// used for adding pools
 const BUSD = "0xf74c427ec673497b84fd6fd0800264fdaf6a2ff4"
 const BNB = "0xae13d989dac2f0debff460ac112a837c89baa7cd"
 const GOONG = "0xb368bE016365c189E23200Ba9a1b92a69c8e8ACb"
+
+// const ONE_EGG = "1000000000000000000";
+const EGG_PER_BLOCK = "5000000000000000000"
 
 module.exports = {
   FACTORY_ADDRESS,
   INIT_CODE_HASH,
   BUSD,
   BNB,
-  GOONG
+  GOONG,
+  EGG_PER_BLOCK
 }

@@ -6,6 +6,7 @@
 const hre = require("hardhat");
 const { feeAddress, devAddress } = require('../secrets.json')
 const { verifyContract } = require('./libs/verify')
+const { EGG_PER_BLOCK } = require('./libs/config')
 
 async function deployGoongToken() {
   const Goong = await hre.ethers.getContractFactory("GoongToken");
@@ -22,9 +23,9 @@ async function deployGoongToken() {
 
 async function deployMasterChef(goongToken) {
   const MasterChef = await hre.ethers.getContractFactory("MasterChefV2");
-  const oneEggPerBlock = "1000000000000000000";
-  const startBlock = 9262220;
-  const constructorParams = [goongToken, devAddress, feeAddress, oneEggPerBlock, startBlock];
+  const currentBlock = await hre.ethers.getDefaultProvider().getBlockNumber();
+  const startBlock = currentBlock + 40; // 2 mins later
+  const constructorParams = [goongToken, devAddress, feeAddress, EGG_PER_BLOCK, startBlock];
   const masterChef = await MasterChef.deploy(...constructorParams)
 
   await masterChef.deployed();
@@ -76,10 +77,10 @@ deployGoongToken()
   .then(verifyContract)
   .then(deployMasterChef)
   .then(verifyContract)
-  .then(deployMulticall)
-  .then(verifyContract)
-  .then(deployTimelock)
-  .then(verifyContract)
+  // .then(deployMulticall)
+  // .then(verifyContract)
+  // .then(deployTimelock)
+  // .then(verifyContract)
   .then(() => process.exit(0))
   .catch(error => {
     console.error(error);

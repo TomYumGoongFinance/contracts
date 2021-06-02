@@ -4,8 +4,8 @@
   "license": "MIT",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy": "npx hardhat run --network testnet scripts/deploy.js",
-    "deployBusd": "npx hardhat run --network testnet scripts/busd.js"
+    "deploy": "npx hardhat run scripts/deploy.js --network",
+    "deployBusd": "npx hardhat run scripts/busd.js --network"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

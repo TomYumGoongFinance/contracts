@@ -10,6 +10,12 @@ module.exports = {
       gasPrice: 20000000000,
       accounts: [privateKey]
     },
+    mainnet: {
+      url: "https://bsc-dataseed.binance.org/",
+      chainId: 56,
+      gasPrice: 5000000000,
+      accounts: [privateKey]
+    }
   },
   etherscan: {
     // Your API key for Etherscan
