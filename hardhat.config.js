@@ -1,5 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
+require('hardhat-spdx-license-identifier');
 const { privateKey, apiKey } = require('./secrets.json')
 
 module.exports = {
@@ -16,6 +17,10 @@ module.exports = {
       gasPrice: 5000000000,
       accounts: [privateKey]
     }
+  },
+  spdxLicenseIdentifier: {
+    overwrite: true,
+    runOnCompile: true,
   },
   etherscan: {
     // Your API key for Etherscan
