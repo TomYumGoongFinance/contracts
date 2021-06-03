@@ -12,7 +12,7 @@ import "./GoongToken.sol";
 // MasterChef is the master of Egg. He can make Egg and he is a fair guy.
 //
 // Note that it's ownable and the owner wields tremendous power. The ownership
-// will be transferred to a governance smart contract once EGG is sufficiently
+// will be transferred to a governance smart contract once GOONG is sufficiently
 // distributed and the community can show to govern itself.
 //
 // Have fun reading it. Hopefully it's bug-free. God bless.
@@ -46,11 +46,11 @@ contract MasterChef is Ownable {
         uint16 depositFeeBP; // Deposit fee in basis points
     }
 
-    // The EGG TOKEN!
+    // The GOONG TOKEN!
     GoongToken public egg;
     // Dev address.
     address public devaddr;
-    // EGG tokens created per block.
+    // GOONG tokens created per block.
     uint256 public eggPerBlock;
     // Bonus muliplier for early egg makers.
     uint256 public constant BONUS_MULTIPLIER = 1;
@@ -63,7 +63,7 @@ contract MasterChef is Ownable {
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when EGG mining starts.
+    // The block number when GOONG mining starts.
     uint256 public startBlock;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
@@ -121,7 +121,7 @@ contract MasterChef is Ownable {
         );
     }
 
-    // Update the given pool's EGG allocation point and deposit fee. Can only be called by the owner.
+    // Update the given pool's GOONG allocation point and deposit fee. Can only be called by the owner.
     function set(
         uint256 _pid,
         uint256 _allocPoint,
@@ -207,7 +207,7 @@ contract MasterChef is Ownable {
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit LP tokens to MasterChef for EGG allocation.
+    // Deposit LP tokens to MasterChef for GOONG allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];

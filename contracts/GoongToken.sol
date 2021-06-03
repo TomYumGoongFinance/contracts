@@ -116,13 +116,13 @@ contract GoongToken is BEP20("Goong", "GOONG") {
         address signatory = ecrecover(digest, v, r, s);
         require(
             signatory != address(0),
-            "EGG::delegateBySig: invalid signature"
+            "GOONG::delegateBySig: invalid signature"
         );
         require(
             nonce == nonces[signatory]++,
-            "EGG::delegateBySig: invalid nonce"
+            "GOONG::delegateBySig: invalid nonce"
         );
-        require(now <= expiry, "EGG::delegateBySig: signature expired");
+        require(now <= expiry, "GOONG::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -151,7 +151,7 @@ contract GoongToken is BEP20("Goong", "GOONG") {
     {
         require(
             blockNumber < block.number,
-            "EGG::getPriorVotes: not yet determined"
+            "GOONG::getPriorVotes: not yet determined"
         );
 
         uint32 nCheckpoints = numCheckpoints[account];
@@ -234,7 +234,7 @@ contract GoongToken is BEP20("Goong", "GOONG") {
         uint32 blockNumber =
             safe32(
                 block.number,
-                "EGG::_writeCheckpoint: block number exceeds 32 bits"
+                "GOONG::_writeCheckpoint: block number exceeds 32 bits"
             );
 
         if (

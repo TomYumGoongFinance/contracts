@@ -6,7 +6,7 @@
 const hre = require("hardhat");
 const { feeAddress, devAddress } = require('../secrets.json')
 const { verifyContract } = require('./libs/verify')
-const { EGG_PER_BLOCK } = require('./libs/config')
+const { EGG_PER_BLOCK, BNB, BUSD, INIT_CODE_HASH } = require('./libs/config')
 
 async function deployGoongToken() {
   const Goong = await hre.ethers.getContractFactory("GoongToken");
@@ -22,10 +22,10 @@ async function deployGoongToken() {
 }
 
 async function deployMasterChef(goongToken) {
-  const MasterChef = await hre.ethers.getContractFactory("MasterChefV2");
+  const MasterChef = await hre.ethers.getContractFactory("MasterChefV3");
   const currentBlock = await hre.ethers.getDefaultProvider().getBlockNumber();
   const startBlock = currentBlock + 40; // 2 mins later
-  const constructorParams = [goongToken, devAddress, feeAddress, EGG_PER_BLOCK, startBlock];
+  const constructorParams = [goongToken, devAddress, feeAddress, EGG_PER_BLOCK, startBlock, BNB, BUSD, INIT_CODE_HASH];
   const masterChef = await MasterChef.deploy(...constructorParams)
 
   await masterChef.deployed();

@@ -37,7 +37,7 @@ Example of `secrets.json`:
 
 - Pancake Factory: https://testnet.bscscan.com/address/0x6725F303b657a9451d8BA641348b6761A6CC7a17
 - Pancake Router: https://testnet.bscscan.com/address/0xD99D1c33F9fC3444f8101754aBC46c52416550D1
-- GoongToken: https://testnet.bscscan.com/token/0xb368bE016365c189E23200Ba9a1b92a69c8e8ACb
-- MasterChef: https://testnet.bscscan.com/address/0x49e443A6623701A2e31d6D257b5b8F2CaA10B613
+- GoongToken: https://testnet.bscscan.com/token/0x49583c8E7917816Bf15a5a380F9F8D9f3754dE5c
+- MasterChef: https://testnet.bscscan.com/address/0xe5359dC688FdE3F53c0F734eb9a02E7DecC5E5f5
 - Timelock: https://testnet.bscscan.com/address/0xf1DfA9C0d039Dfb8bdA24974F402dA5263Cb92F3
 - Busd: https://testnet.bscscan.com/address/0xf74C427EC673497b84Fd6FD0800264FDaf6A2Ff4
