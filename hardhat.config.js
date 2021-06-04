@@ -16,6 +16,12 @@ module.exports = {
       chainId: 56,
       gasPrice: 5000000000,
       accounts: [privateKey]
+    },
+    matic: {
+      url: "https://rpc-mainnet.maticvigil.com",
+      chainId: 137,
+      gasPrice: 1000000000,
+      accounts: [privateKey]
     }
   },
   spdxLicenseIdentifier: {

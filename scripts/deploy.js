@@ -22,10 +22,11 @@ async function deployGoongToken() {
 }
 
 async function deployMasterChef(goongToken) {
-  const MasterChef = await hre.ethers.getContractFactory("MasterChefV3");
+  const MasterChef = await hre.ethers.getContractFactory("MasterChefV2");
   const currentBlock = await hre.ethers.getDefaultProvider().getBlockNumber();
   const startBlock = currentBlock + 40; // 2 mins later
-  const constructorParams = [goongToken, devAddress, feeAddress, EGG_PER_BLOCK, startBlock, BNB, BUSD, INIT_CODE_HASH];
+  // const constructorParams = [goongToken, devAddress, feeAddress, EGG_PER_BLOCK, startBlock, BNB, BUSD, INIT_CODE_HASH];
+  const constructorParams = [goongToken, devAddress, feeAddress, EGG_PER_BLOCK, startBlock];
   const masterChef = await MasterChef.deploy(...constructorParams)
 
   await masterChef.deployed();
