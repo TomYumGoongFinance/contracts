@@ -3,6 +3,14 @@ require("@nomiclabs/hardhat-etherscan");
 require('hardhat-spdx-license-identifier');
 const { privateKey, apiKey } = require('./secrets.json')
 
+task("accounts", "Prints the list of accounts", async (args, hre) => {
+  const accounts = await hre.ethers.getSigners();
+
+  for (const account of accounts) {
+    console.log(account.address);
+  }
+});
+
 module.exports = {
   networks: {
     testnet: {
@@ -22,6 +30,11 @@ module.exports = {
       chainId: 137,
       gasPrice: 1000000000,
       accounts: [privateKey]
+    },
+    hardhat: {
+      throwOnTransactionFailures: true,
+      throwOnCallFailures: true,
+      allowUnlimitedContractSize: true,
     }
   },
   spdxLicenseIdentifier: {
@@ -41,6 +54,8 @@ module.exports = {
         version: "0.5.16"
       }, {
         version: "0.5.0"
+      }, {
+        version: "0.4.18"
       }
     ]
   }

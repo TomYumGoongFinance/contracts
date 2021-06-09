@@ -4,11 +4,11 @@ const fs = require('fs')
 /**
  * Make sure the data below is correct before running
  */
-const { timelockAddress, masterchefAddress } = require('../secrets.json')
+const { TIMELOCK_ADDRESS, MASTERCHEF_ADDRESS } = require("./libs/config");
 
 async function queueTransaction(args) {
   const Timelock = await ethers.getContractFactory("Timelock");
-  const timelock = await Timelock.attach(timelockAddress)
+  const timelock = await Timelock.attach(TIMELOCK_ADDRESS)
 
   const transaction = await timelock.queueTransaction(...args)
     .then(({ wait }) => wait())
@@ -20,7 +20,7 @@ async function queueTransaction(args) {
 
 async function executeTransaction(args) {
   const Timelock = await ethers.getContractFactory("Timelock");
-  const timelock = await Timelock.attach(timelockAddress)
+  const timelock = await Timelock.attach(TIMELOCK_ADDRESS)
 
   const transaction = await timelock.executeTransaction(...args)
     .then(({ wait }) => wait())
@@ -37,7 +37,7 @@ function addPool(allocPoint, lpToken, depositFeeBP, eta, withUpdate = false) {
   ]
   const data = bytes32Args(types, [allocPoint, lpToken, depositFeeBP, withUpdate])
   return [
-    masterchefAddress,
+    MASTERCHEF_ADDRESS,
     0,
     `add(${types.join(',')})`,
     data,

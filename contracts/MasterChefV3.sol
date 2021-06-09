@@ -3,25 +3,37 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./libs/IBEP20.sol";
-import "./libs/SafeBEP20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./GoongToken.sol";
-import "./libs/IPancakePair.sol";
+import "./libs/IBEP20.sol";
+import "./libs/SafeBEP20.sol";
+import {GoongToken} from "./GoongToken.sol";
+import {IPancakePair} from "./libs/IPancakePair.sol";
 
-// MasterChef is the master of Egg. He can make Egg and he is a fair guy.
+interface IFactory {
+    function getPair(address, address) external view returns (address);
+}
+
+// ████████╗░█████╗░███╗░░░███╗██╗░░░██╗██╗░░░██╗███╗░░░███╗░██████╗░░█████╗░░█████╗░███╗░░██╗░██████╗░
+// ╚══██╔══╝██╔══██╗████╗░████║╚██╗░██╔╝██║░░░██║████╗░████║██╔════╝░██╔══██╗██╔══██╗████╗░██║██╔════╝░
+// ░░░██║░░░██║░░██║██╔████╔██║░╚████╔╝░██║░░░██║██╔████╔██║██║░░██╗░██║░░██║██║░░██║██╔██╗██║██║░░██╗░
+// ░░░██║░░░██║░░██║██║╚██╔╝██║░░╚██╔╝░░██║░░░██║██║╚██╔╝██║██║░░╚██╗██║░░██║██║░░██║██║╚████║██║░░╚██╗
+// ░░░██║░░░╚█████╔╝██║░╚═╝░██║░░░██║░░░╚██████╔╝██║░╚═╝░██║╚██████╔╝╚█████╔╝╚█████╔╝██║░╚███║╚██████╔╝
+// ░░░╚═╝░░░░╚════╝░╚═╝░░░░░╚═╝░░░╚═╝░░░░╚═════╝░╚═╝░░░░░╚═╝░╚═════╝░░╚════╝░░╚════╝░╚═╝░░╚══╝░╚═════╝░
 //
-// Note that it's ownable and the owner wields tremendous power. The ownership
-// will be transferred to a governance smart contract once GOONG is sufficiently
-// distributed and the community can show to govern itself.
-//
-// Have fun reading it. Hopefully it's bug-free. God bless.
+//     ____________  \
+//                 \ |
+//                 / /
+//      /=========== * ===
+//     /=============-----
+//    /=============\\
+//   // |||| }}\\\\
+//   |||
+//    \\\
+//     \\\
 
 // Features:
-// 1. User can deposit without fee when holds enough $GOONG. Transfer $GOONG from holder wallet to smart contract until unstake.
-// 2.
-
+// - User can deposit without fee by locked required $GOONG, depending on the deposit volume. Goong will be remained locked in the smart contract until unstaked.
 contract MasterChefV3 is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
@@ -61,8 +73,6 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
     address public devaddr;
     // GOONG tokens created per block.
     uint256 public eggPerBlock;
-    // Pancake factory init code hash
-    bytes32 public factoryInitCodeHash;
 
     // Bonus muliplier for early egg makers.
     uint256 public constant BONUS_MULTIPLIER = 1;
@@ -78,7 +88,7 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
     // Info of each user that stakes LP tokens.
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Info of user voucher that stakes LP tokens without fee.
-    mapping(address => mapping(uint256 => uint256)) public voucherInfo;
+    mapping(uint256 => mapping(address => uint256)) public voucherInfo;
     // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
     // The block number when GOONG mining starts.
@@ -102,8 +112,7 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         uint256 _eggPerBlock,
         uint256 _startBlock,
         address _bnb,
-        address _busd,
-        bytes32 _initCodeHash
+        address _busd // bytes32 _initCodeHash
     ) public {
         egg = _egg;
         devaddr = _devaddr;
@@ -112,7 +121,6 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         startBlock = _startBlock;
         bnb = _bnb;
         busd = _busd;
-        factoryInitCodeHash = _initCodeHash;
     }
 
     function poolLength() external view returns (uint256) {
@@ -242,20 +250,28 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
 
     function depositWithoutFee(uint256 _pid, uint256 _amount) public {
         require(voucherRate > 0, "voucherRate must be set");
-        uint256 goongAmount = obtainGoongAmount(_pid, _amount);
+        require(!isContract(), "caller must be EOA");
+        uint256 goongAmount = calculateGoongCoverFee(_pid, _amount);
         egg.transferFrom(msg.sender, address(this), goongAmount);
 
-        voucherInfo[msg.sender][_pid] += goongAmount;
+        voucherInfo[_pid][msg.sender] = voucherInfo[_pid][msg.sender].add(
+            goongAmount
+        );
 
         _deposit(_pid, _amount, true);
     }
 
+    /**
+     * @dev Calculate how much LP value needed for required the same voucher's value.
+     * @param _pid the id of the desired pool.
+     * @param _amount the lp amount.
+     */
     function calculateLpVoucherFee(uint256 _pid, uint256 _amount)
         private
         view
         returns (uint256)
     {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         uint256 _depositFee = pool.depositFeeBP;
         return _amount.mul(_depositFee).mul(voucherRate).div(1e4);
     }
@@ -276,14 +292,21 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         if (pending > 0) {
             safeEggTransfer(msg.sender, pending);
         }
+        uint256 totalGoongLocked = voucherInfo[_pid][msg.sender];
+        if (totalGoongLocked > 0) {
+            uint256 goongAmount =
+                _amount.mul(totalGoongLocked).div(user.amount);
+            if (totalGoongLocked - goongAmount >= 0) {
+                voucherInfo[_pid][msg.sender] -= goongAmount;
+                safeEggTransfer(msg.sender, goongAmount);
+            } else {
+                safeEggTransfer(msg.sender, totalGoongLocked);
+                voucherInfo[_pid][msg.sender] = 0;
+            }
+        }
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
-        }
-        if (voucherInfo[msg.sender][_pid] > 0) {
-            uint256 goongAmount = obtainGoongAmount(_pid, _amount);
-            egg.transfer(msg.sender, goongAmount);
-            voucherInfo[msg.sender][_pid] -= goongAmount;
         }
         user.rewardDebt = user.amount.mul(pool.accEggPerShare).div(1e12);
         emit Withdraw(msg.sender, _pid, _amount);
@@ -337,8 +360,22 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         emit UpdateEmissionRate(msg.sender, _eggPerBlock);
     }
 
-    function obtainGoongAmount(uint256 _pid, uint256 _amount)
+    function getQuoteTokenReserveFromPair(IPancakePair pair, address quoteToken)
         private
+        view
+        returns (uint256)
+    {
+        uint256 _reserve;
+        if (pair.token0() == quoteToken) {
+            (_reserve, , ) = pair.getReserves();
+        } else {
+            (, _reserve, ) = pair.getReserves();
+        }
+        return _reserve;
+    }
+
+    function calculateGoongCoverFee(uint256 _pid, uint256 _amount)
+        public
         view
         returns (uint256)
     {
@@ -352,40 +389,39 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
             quoteToken = bnb;
         }
 
-        uint256 _lpVoucherFee = calculateLpVoucherFee(_pid, _amount); // BNB/BUSD, amount = 10, ต้องมี goong มูลค่า 6% ของ _amount
+        uint256 _lpVoucherFee = calculateLpVoucherFee(_pid, _amount);
 
-        address token0 = pair.token0();
-        address token1 = pair.token1();
-
-        uint256 _reserve;
-        if (token0 == quoteToken) {
-            (_reserve, , ) = pair.getReserves();
-        } else {
-            (, _reserve, ) = pair.getReserves();
-        }
+        uint256 _reserve = getQuoteTokenReserveFromPair(pair, quoteToken);
         uint256 quoteTokenWorth =
             _lpVoucherFee.mul(_reserve).mul(2).div(pair.totalSupply());
 
-        address goongQuoteTokenLP =
-            calculatePairAddress(
-                token0,
-                token1,
-                pair.factory(),
-                factoryInitCodeHash
-            );
+        IFactory factory = IFactory(pair.factory());
+        address goongQuoteTokenLP = factory.getPair(address(egg), quoteToken);
 
         IPancakePair goongQuoteTokenPair = IPancakePair(goongQuoteTokenLP);
         uint256 _reserveQuoteToken;
         uint256 _reserveGoong;
         if (goongQuoteTokenPair.token0() == quoteToken) {
-            (_reserveQuoteToken, _reserveGoong, ) = pair.getReserves();
+            (_reserveQuoteToken, _reserveGoong, ) = goongQuoteTokenPair
+                .getReserves();
         } else {
-            (_reserveGoong, _reserveQuoteToken, ) = pair.getReserves();
+            (_reserveGoong, _reserveQuoteToken, ) = goongQuoteTokenPair
+                .getReserves();
         }
         uint256 goongAmount =
             quoteTokenWorth.mul(_reserveGoong).div(_reserveQuoteToken);
 
         return goongAmount;
+    }
+
+    function isContract() private view returns (bool) {
+        require(tx.origin == msg.sender, "caller must be EOA");
+        uint32 size;
+        address a = msg.sender;
+        assembly {
+            size := extcodesize(a)
+        }
+        return (size > 0);
     }
 
     function _deposit(
@@ -421,28 +457,5 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         }
         user.rewardDebt = user.amount.mul(pool.accEggPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
-    }
-
-    function calculatePairAddress(
-        address token0,
-        address token1,
-        address factory,
-        bytes32 initCodeHash
-    ) private pure returns (address) {
-        address pair =
-            address(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            hex"ff",
-                            factory,
-                            keccak256(abi.encodePacked(token0, token1)),
-                            initCodeHash
-                        )
-                    )
-                )
-            );
-
-        return pair;
     }
 }
