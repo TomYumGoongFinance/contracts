@@ -5,6 +5,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./libs/IBEP20.sol";
+import "hardhat/console.sol";
 
 /**
  * Author: tomyumchef at tomyumgoong.finance
@@ -16,7 +17,7 @@ contract GoongVesting is Ownable {
 
     mapping(address => VestingInfo) public vestingInfo;
 
-    uint256 constant MINIMUM_DURATION = 180 days;
+    uint256 public minimumDuration;
     uint256 constant MINIMUM_VESTED_AMOUNT = 1800 ether;
 
     event Claimed(address indexed recipient, uint256 claimedAmount);
@@ -30,8 +31,9 @@ contract GoongVesting is Ownable {
         uint256 claimedAmount; // Total claimed token amount
     }
 
-    constructor(address _token) public {
+    constructor(address _token, uint256 _minDuration) public {
         token = IBEP20(_token);
+        minimumDuration = _minDuration;
     }
 
     modifier onlyVestedRecipient() {
@@ -56,11 +58,11 @@ contract GoongVesting is Ownable {
         uint256 _amount
     ) public onlyOwner {
         require(
-            vestingInfo[_recipient].recipient != _recipient,
+            vestingInfo[_recipient].initialLockedAmount == 0,
             "recipient is already vested goong"
         );
         require(
-            _duration >= MINIMUM_DURATION,
+            _duration >= minimumDuration,
             "vested duration must be greater than 180 days"
         );
         require(
@@ -94,7 +96,7 @@ contract GoongVesting is Ownable {
         require(info.startDate < block.timestamp, "too early to claim");
         require(
             info.initialLockedAmount > info.claimedAmount,
-            "Already claimed all vested tokens"
+            "already claimed all vested tokens"
         );
 
         uint256 _claimableAmount = claimableAmount(msg.sender);
@@ -106,7 +108,7 @@ contract GoongVesting is Ownable {
             _claimableAmount = info.initialLockedAmount.sub(info.claimedAmount);
         }
 
-        token.transferFrom(address(this), msg.sender, _claimableAmount);
+        token.transfer(msg.sender, _claimableAmount);
         info.claimedAmount = info.claimedAmount.add(_claimableAmount);
 
         emit Claimed(msg.sender, _claimableAmount);
@@ -164,16 +166,26 @@ contract GoongVesting is Ownable {
             return 0;
         }
 
-        uint256 _vestedDistance =
-            block.timestamp.sub(info.startDate).div(info.duration);
+        if (block.timestamp < info.startDate) return 0;
+
+        // uint256 _vestedDistance =
+        //     block.timestamp.sub(info.startDate).div(info.duration);
 
         uint256 _claimableAmount =
-            info.initialLockedAmount.mul(_vestedDistance).sub(
-                info.claimedAmount
-            );
+            info
+                .initialLockedAmount
+                .mul(block.timestamp.sub(info.startDate))
+                .div(info.duration)
+                .sub(info.claimedAmount);
 
         return _claimableAmount;
     }
 
-    function claimablePerDay(address recipient) public view returns (uint256) {}
+    function claimablePerDay(address recipient) public view returns (uint256) {
+        VestingInfo memory info = vestingInfo[recipient];
+
+        if (info.initialLockedAmount == 0) return 0;
+
+        return uint256(1 days).mul(info.initialLockedAmount).div(info.duration);
+    }
 }
