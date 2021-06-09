@@ -113,8 +113,9 @@ contract GoongVesting is Ownable {
     }
 
     /**
-     * @dev Returns number of seconds until fully unlocked.
+     * @dev Calculate a number of seconds to be fully unlocked.
      * @param recipient a vesting recipient address.
+     * @return number of seconds until fully unlocked. returns 0 if it's already fully unlocked.
      */
     function vestedDurationLeft(address recipient)
         public
@@ -154,6 +155,7 @@ contract GoongVesting is Ownable {
     /**
      * Returns claimable amount for given address
      * @param recipient A vesting recipient address
+     * @return an amount of tokens that ready to be claimed
      */
     function claimableAmount(address recipient) public view returns (uint256) {
         VestingInfo memory info = vestingInfo[recipient];
