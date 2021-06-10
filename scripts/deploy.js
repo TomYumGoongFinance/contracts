@@ -10,8 +10,11 @@ const {
   BNB,
   BUSD,
   FEE_ADDRESS,
-  DEV_ADDRESS
+  DEV_ADDRESS,
+  MINIMUM_DURATION
 } = require("./libs/config")
+
+let goongAddress
 
 async function deployGoongToken() {
   const Goong = await hre.ethers.getContractFactory("GoongToken")
@@ -19,7 +22,9 @@ async function deployGoongToken() {
 
   await goong.deployed()
 
-  console.log("GoongToken deployed to:", goong.address)
+  goongAddress = goong.address
+
+  console.log("GoongToken deployed to:", goongAddress)
 
   return {
     contractAddress: goong.address
@@ -73,22 +78,21 @@ async function deployMulticall() {
   }
 }
 
-async function deployGoongVesting(goongToken) {
-  const GoongVesting = await hre.ethers.getContractFactory("GoongVesting")
-  const goongVesting = await GoongVesting.deploy(goongToken)
-
-  await goongVesting.deployed()
-
-  console.log("GoongVesting deployed to:", goongVesting.address)
+async function deployVesting() {
+  const GoongVesting = await ethers.getContractFactory("GoongVesting")
+  const params = [goongAddress, MINIMUM_DURATION]
+  const vesting = await GoongVesting.deploy(...params)
+  await vesting.deployed()
 
   return {
-    contractAddress: goongVesting.address
+    contractAddress: vesting.address,
+    params
   }
 }
 
 async function deployTimelock() {
   const Timelock = await hre.ethers.getContractFactory("Timelock")
-  const constructorParams = [devAddress, 30] // delay 6 hours
+  const constructorParams = [DEV_ADDRESS, 30] // delay 6 hours
   const timelock = await Timelock.deploy(...constructorParams)
 
   await timelock.deployed()
@@ -110,12 +114,12 @@ async function deployTimelock() {
  */
 deployGoongToken()
   .then(verifyContract)
-  // .then(deployGoongVesting)
-  // .then(verifyContract)
-  // .then(deployMasterChef)
-  // .then(verifyContract)
-  // .then(deployTimelock)
-  // .then(verifyContract)
+  .then(deployVesting)
+  .then(verifyContract)
+  .then(deployMasterChef)
+  .then(verifyContract)
+  .then(deployTimelock)
+  .then(verifyContract)
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)
