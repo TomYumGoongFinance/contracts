@@ -2,6 +2,7 @@ const { expect } = require("chai")
 const { ethers } = require("hardhat")
 const chalk = require("chalk")
 const { setupTests } = require("./setup")
+const { mine, currentBlockNumber } = require("./libs/rpc")
 const { balanceOfLP, getLPAddress } = require("./libs/pair")
 const { log } = require("./libs/utils")
 const {
@@ -579,6 +580,102 @@ describe("MasterChefV3", function () {
         10000
       )
       expect(voucherLeft).to.be.closeTo(ethers.BigNumber.from("0"), 10000)
+    })
+  })
+
+  describe("updatePool", async function () {
+    let masterChef
+    beforeEach(async () => {
+      global.showLog = false
+      await setupTests()
+      const { goong, weth, busd } = global
+
+      let [owner, feeAccount, alice] = await ethers.getSigners()
+
+      const MasterChef = await ethers.getContractFactory("MasterChefV3")
+      const currentBlock = await currentBlockNumber()
+      const startBlock = currentBlock + 1
+      const eggPerBlock = ethers.utils.parseEther("1000000") // 1M goong per block
+      const constructorParams = [
+        goong.address,
+        owner.address,
+        feeAccount.address,
+        eggPerBlock,
+        startBlock,
+        weth.address,
+        busd.address
+      ]
+      masterChef = await MasterChef.deploy(...constructorParams)
+      await masterChef.deployed()
+      log("Deployed MasterChefV3:", chalk.greenBright(masterChef.address))
+
+      // 1. Set voucher rate
+      await masterChef.setVoucherRate(10)
+
+      // 2. Transfer goong ownership
+      await goong.transferOwnership(masterChef.address)
+
+      // 3. Send busd and goong from owner account to alice account
+      const goongAmount = ethers.utils.parseEther("10000")
+      const busdAmount = ethers.utils.parseEther("10000")
+      await goong.transfer(alice.address, goongAmount)
+      await busd.transfer(alice.address, busdAmount)
+    })
+
+    it("should mint goong if reward <= max supply - total supply", async function () {
+      const [_owner, dev, alice] = await ethers.getSigners()
+      const { weth, goong, pancakeRouter } = global
+      const lpAddress = await getLPAddress(weth.address, goong.address)
+      await approveTokens([goong.connect(alice)], pancakeRouter.address)
+      await addLiquidityETH(global.pancakeRouter.connect(alice), {
+        token: goong,
+        tokenAmount: ethers.utils.parseEther("2000"),
+        ethAmount: ethers.utils.parseEther("2"),
+        senderAddress: alice.address
+      })
+      const PancakePair = await ethers.getContractFactory("PancakePair")
+      const pair = PancakePair.attach(lpAddress)
+
+      await approveTokens(
+        [goong.connect(alice), pair.connect(alice)],
+        masterChef.address
+      )
+      await masterChef.add(1, lpAddress, 200, false)
+      const aliceLPAmount = await balanceOfLP(weth, goong, alice.address)
+      await masterChef.connect(alice).depositWithoutFee(0, aliceLPAmount)
+      const initialSupply = await goong.totalSupply()
+      await mine(10)
+      await masterChef.updatePool(0)
+      const totalSupply = await goong.totalSupply()
+      expect(totalSupply).to.be.gt(initialSupply)
+    })
+
+    it("should not mint goong if reward > max supply - total supply", async function () {
+      const [_owner, dev, alice] = await ethers.getSigners()
+      const { weth, goong, pancakeRouter } = global
+      const lpAddress = await getLPAddress(weth.address, goong.address)
+      await approveTokens([goong.connect(alice)], pancakeRouter.address)
+      await addLiquidityETH(global.pancakeRouter.connect(alice), {
+        token: goong,
+        tokenAmount: ethers.utils.parseEther("2000"),
+        ethAmount: ethers.utils.parseEther("2"),
+        senderAddress: alice.address
+      })
+      const PancakePair = await ethers.getContractFactory("PancakePair")
+      const pair = PancakePair.attach(lpAddress)
+
+      await approveTokens(
+        [goong.connect(alice), pair.connect(alice)],
+        masterChef.address
+      )
+      await masterChef.add(1, lpAddress, 200, false)
+      const aliceLPAmount = await balanceOfLP(weth, goong, alice.address)
+      await masterChef.connect(alice).depositWithoutFee(0, aliceLPAmount)
+      const initialSupply = await goong.totalSupply()
+      await mine(90)
+      await masterChef.updatePool(0)
+      const totalSupply = await goong.totalSupply()
+      expect(totalSupply).to.be.eq(initialSupply)
     })
   })
 })

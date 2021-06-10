@@ -24,8 +24,15 @@ import "./libs/BEP20.sol";
 
 // GoongToken with Governance.
 contract GoongToken is BEP20("Goong", "GOONG") {
+    uint256 public constant MAX_SUPPLY = 100000000 ether;
+
     /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
     function mint(address _to, uint256 _amount) public onlyOwner {
+        require(
+            totalSupply().add(_amount) < MAX_SUPPLY,
+            "max supply has been reached"
+        );
+
         _mint(_to, _amount);
         _moveDelegates(address(0), _delegates[_to], _amount);
     }
