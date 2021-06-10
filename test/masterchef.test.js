@@ -16,7 +16,7 @@ const {
 const { approveTokens } = require("./libs/token")
 
 describe("MasterChefV3", function () {
-  describe.skip("calculateGoongCoverFee with voucherRate: 10", async () => {
+  describe("calculateGoongCoverFee with voucherRate: 10", async () => {
     let masterChef
     beforeEach(async () => {
       global.showLog = false
@@ -139,7 +139,7 @@ describe("MasterChefV3", function () {
     })
   })
 
-  describe.skip("depositWithoutFee", async () => {
+  describe("depositWithoutFee", async () => {
     let masterChef
     beforeEach(async () => {
       global.showLog = false
@@ -447,7 +447,7 @@ describe("MasterChefV3", function () {
     })
   })
 
-  describe.skip("withdraw", async () => {
+  describe("withdraw", async () => {
     let masterChef
     beforeEach(async () => {
       global.showLog = false
