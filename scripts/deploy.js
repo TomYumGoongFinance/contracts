@@ -73,6 +73,19 @@ async function deployMulticall() {
   }
 }
 
+async function deployGoongVesting(goongToken) {
+  const GoongVesting = await hre.ethers.getContractFactory("GoongVesting")
+  const goongVesting = await GoongVesting.deploy(goongToken)
+
+  await goongVesting.deployed()
+
+  console.log("GoongVesting deployed to:", goongVesting.address)
+
+  return {
+    contractAddress: goongVesting.address
+  }
+}
+
 async function deployTimelock() {
   const Timelock = await hre.ethers.getContractFactory("Timelock")
   const constructorParams = [devAddress, 30] // delay 6 hours
@@ -91,15 +104,15 @@ async function deployTimelock() {
 /**
  * Deploy and verify:
  * 1. GoongToken
- * 2. MasterChef
- * 3. Multicall
+ * 2. GoongVesting
+ * 3. MasterChef
  * 4. Timelock
  */
 deployGoongToken()
   .then(verifyContract)
-  // .then(deployMasterChef)
+  // .then(deployGoongVesting)
   // .then(verifyContract)
-  // .then(deployMulticall)
+  // .then(deployMasterChef)
   // .then(verifyContract)
   // .then(deployTimelock)
   // .then(verifyContract)

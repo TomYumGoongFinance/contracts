@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-spdx-license-identifier');
+require("hardhat-gas-reporter");
 const { privateKey, apiKey } = require('./secrets.json')
 
 task("accounts", "Prints the list of accounts", async (args, hre) => {
@@ -45,6 +46,11 @@ module.exports = {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey
+  },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 5,
+    enabled: false
   },
   solidity: {
     compilers: [
