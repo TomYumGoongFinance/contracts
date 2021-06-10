@@ -240,12 +240,18 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
             multiplier.mul(eggPerBlock).mul(pool.allocPoint).div(
                 totalAllocPoint
             );
-        egg.mint(devaddr, eggReward.div(10));
-        egg.mint(address(this), eggReward);
-        pool.accEggPerShare = pool.accEggPerShare.add(
-            eggReward.mul(1e12).div(lpSupply)
-        );
-        pool.lastRewardBlock = block.number;
+
+        if (
+            eggReward.add(eggReward.div(10)) <=
+            egg.MAX_SUPPLY().sub(egg.totalSupply())
+        ) {
+            egg.mint(devaddr, eggReward.div(10));
+            egg.mint(address(this), eggReward);
+            pool.accEggPerShare = pool.accEggPerShare.add(
+                eggReward.mul(1e12).div(lpSupply)
+            );
+            pool.lastRewardBlock = block.number;
+        }
     }
 
     function depositWithoutFee(uint256 _pid, uint256 _amount) public {
