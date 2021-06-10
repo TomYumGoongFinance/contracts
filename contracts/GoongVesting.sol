@@ -17,8 +17,9 @@ contract GoongVesting is Ownable {
 
     mapping(address => VestingInfo) public vestingInfo;
 
-    uint256 public minimumDuration;
     uint256 constant MINIMUM_VESTED_AMOUNT = 1800 ether;
+
+    uint256 public minimumDuration;
 
     event Claimed(address indexed recipient, uint256 claimedAmount);
     event AddedTokenVesting(address indexed recipient);
@@ -63,7 +64,7 @@ contract GoongVesting is Ownable {
         );
         require(
             _duration >= minimumDuration,
-            "vested duration must be greater than 180 days"
+            "vested duration must be greater than minimum duration"
         );
         require(
             _amount >= MINIMUM_VESTED_AMOUNT,
@@ -167,9 +168,6 @@ contract GoongVesting is Ownable {
         }
 
         if (block.timestamp < info.startDate) return 0;
-
-        // uint256 _vestedDistance =
-        //     block.timestamp.sub(info.startDate).div(info.duration);
 
         uint256 _claimableAmount =
             info

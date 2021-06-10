@@ -7,7 +7,6 @@ describe("GoongVesting", function () {
   let vestingContract, goong
   const hour = 3600
   beforeEach(async () => {
-    const [owner, alice] = await ethers.getSigners()
     const Goong = await ethers.getContractFactory("GoongToken")
     goong = await Goong.deploy()
     await goong.deployed()
@@ -88,7 +87,7 @@ describe("GoongVesting", function () {
       ).to.be.revertedWith("vested amount must be greater than 1800 goong")
     })
 
-    it("should reverted: `vested duration must be greater than 180 days` when the given duration is less than the minimum duration", async function () {
+    it("should reverted: `vested duration must be greater than minimum duration` when the given duration is less than the minimum duration", async function () {
       const [owner, alice] = await ethers.getSigners()
       const startDate = await currentBlockTimestamp()
       await approveTokens([goong], vestingContract.address)
@@ -100,7 +99,9 @@ describe("GoongVesting", function () {
           1, // 1 sec
           ethers.utils.parseEther("2000")
         )
-      ).to.be.revertedWith("vested duration must be greater than 180 days")
+      ).to.be.revertedWith(
+        "vested duration must be greater than minimum duration"
+      )
     })
 
     it("should reverted: `start date cannot be the past` when given start date is less than block.timestamp", async function () {
@@ -119,7 +120,7 @@ describe("GoongVesting", function () {
     })
   })
 
-  describe("claim", async function () {
+  describe.skip("claim", async function () {
     it("should transfer goong from contract back to sender given `start date < current block timestamp < start date + duration`", async function () {
       const [owner, alice] = await ethers.getSigners()
       const startDate = await currentBlockTimestamp()
@@ -220,12 +221,69 @@ describe("GoongVesting", function () {
     })
   })
 
-  describe.skip("vestedDurationLeft", async function () {
-    it("should returns 2,000 when block.timestamp < start date and start date + duration - current timestamp = 2000", async function () {})
+  describe("vestedDurationLeft", async function () {
+    it("should returns 4,000 when block.timestamp < start date and start date + duration - current timestamp = 4000", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp().then(
+        (seconds) => seconds + 401
+      ) // start at the next 401 blocks
+      const duration = 1 * 60 * 60 // 3600 seconds
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate,
+        duration,
+        ethers.utils.parseEther("2000")
+      ) // this tx add 1 block
+      const durationLeft = await vestingContract.vestedDurationLeft(
+        alice.address
+      )
+      expect(durationLeft).to.be.eq(4000)
+    })
 
-    it("should returns 1,000 when block.timestamp >= start date and start date + duration - current timestamp = 1000", async function () {})
+    it("should returns 1,000 when block.timestamp >= start date and start date + duration - current timestamp = 1000", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp().then(
+        (seconds) => seconds
+      )
+      const duration = 1 * 60 * 60 // 3600 seconds
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        duration,
+        ethers.utils.parseEther("2000")
+      ) // this tx add 1 block
 
-    it("should returns 0 when block.timestamp > start date + duration", async function () {})
+      await mine(2600)
+
+      const durationLeft = await vestingContract.vestedDurationLeft(
+        alice.address
+      )
+      expect(durationLeft).to.be.eq(1000)
+    })
+
+    it("should returns 0 when block.timestamp > start date + duration", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp().then(
+        (seconds) => seconds
+      )
+      const duration = 1 * 60 * 60 // 3600 seconds
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        duration,
+        ethers.utils.parseEther("2000")
+      ) // this tx add 1 block
+
+      await mine(3700)
+
+      const durationLeft = await vestingContract.vestedDurationLeft(
+        alice.address
+      )
+      expect(durationLeft).to.be.eq(0)
+    })
   })
 
   describe.skip("remainingVestedAmount", async function () {
