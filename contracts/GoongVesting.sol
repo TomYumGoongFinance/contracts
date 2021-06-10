@@ -179,6 +179,9 @@ contract GoongVesting is Ownable {
         return _claimableAmount;
     }
 
+    /**
+    * Calculate number of goongs can be claimed per day
+    */
     function claimablePerDay(address recipient) public view returns (uint256) {
         VestingInfo memory info = vestingInfo[recipient];
 

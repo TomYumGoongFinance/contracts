@@ -391,4 +391,44 @@ describe("GoongVesting", function () {
       expect(claimableAmount).to.be.eq("0")
     })
   })
+
+  describe("claimablePerDay", async function () {
+    it("should returns 10k when vested 1M goong for 100 days", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp()
+
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        100 * 24 * 60 * 60,
+        ethers.utils.parseEther("1000000")
+      )
+
+      const claimablePerDay = await vestingContract.claimablePerDay(alice.address)
+      expect(claimablePerDay).to.be.eq(ethers.utils.parseEther("10000"))
+    })
+
+    it("should returns 400k when vested 1M goong for 2.5 days", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp()
+
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        2.5 * 24 * 60 * 60,
+        ethers.utils.parseEther("1000000")
+      )
+
+      const claimablePerDay = await vestingContract.claimablePerDay(alice.address)
+      expect(claimablePerDay).to.be.eq(ethers.utils.parseEther("400000"))
+    })
+
+    it("should returns 0 when never vested goong", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      const claimablePerDay = await vestingContract.claimablePerDay(alice.address)
+      expect(claimablePerDay).to.be.eq("0")
+    })
+  })
 })
