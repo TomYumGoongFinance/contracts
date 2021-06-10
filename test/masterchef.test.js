@@ -14,7 +14,7 @@ const {
 } = require("./libs/router")
 const { approveTokens } = require("./libs/token")
 
-describe.skip("MasterChefV3", function () {
+describe("MasterChefV3", function () {
   describe("calculateGoongCoverFee with voucherRate: 10", async () => {
     let masterChef
     beforeEach(async () => {

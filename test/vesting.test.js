@@ -19,7 +19,7 @@ describe("GoongVesting", function () {
     await goong["mint(uint256)"](goongAmount)
   })
 
-  describe.skip("addTokenVesting", async function () {
+  describe("addTokenVesting", async function () {
     it("should transfer goong token from sender wallet to vesting contract given valid params", async function () {
       const [owner, alice] = await ethers.getSigners()
       const startDate = await currentBlockTimestamp()
@@ -72,7 +72,7 @@ describe("GoongVesting", function () {
       ).to.be.revertedWith("recipient is already vested goong")
     })
 
-    it("should reverted: `vested amount must be greater than 1800 goong` when amount less than the minimum vested amount", async function () {
+    it("should reverted: `vested amount must be greater than 1000 goong` when amount less than the minimum vested amount", async function () {
       const [owner, alice] = await ethers.getSigners()
       const startDate = await currentBlockTimestamp()
       await approveTokens([goong], vestingContract.address)
@@ -82,9 +82,9 @@ describe("GoongVesting", function () {
           alice.address,
           startDate + 2,
           2 * 60 * 60, // 2 hour
-          ethers.utils.parseEther("1000")
+          ethers.utils.parseEther("800")
         )
-      ).to.be.revertedWith("vested amount must be greater than 1800 goong")
+      ).to.be.revertedWith("vested amount must be greater than 1000 goong")
     })
 
     it("should reverted: `vested duration must be greater than minimum duration` when the given duration is less than the minimum duration", async function () {
@@ -120,7 +120,7 @@ describe("GoongVesting", function () {
     })
   })
 
-  describe.skip("claim", async function () {
+  describe("claim", async function () {
     it("should transfer goong from contract back to sender given `start date < current block timestamp < start date + duration`", async function () {
       const [owner, alice] = await ethers.getSigners()
       const startDate = await currentBlockTimestamp()
@@ -244,9 +244,7 @@ describe("GoongVesting", function () {
     it("should returns 1,000 when block.timestamp >= start date and start date + duration - current timestamp = 1000", async function () {
       const [owner, alice] = await ethers.getSigners()
       await approveTokens([goong], vestingContract.address)
-      const startDate = await currentBlockTimestamp().then(
-        (seconds) => seconds
-      )
+      const startDate = await currentBlockTimestamp().then((seconds) => seconds)
       const duration = 1 * 60 * 60 // 3600 seconds
       await vestingContract.addTokenVesting(
         alice.address,
@@ -266,9 +264,7 @@ describe("GoongVesting", function () {
     it("should returns 0 when block.timestamp > start date + duration", async function () {
       const [owner, alice] = await ethers.getSigners()
       await approveTokens([goong], vestingContract.address)
-      const startDate = await currentBlockTimestamp().then(
-        (seconds) => seconds
-      )
+      const startDate = await currentBlockTimestamp().then((seconds) => seconds)
       const duration = 1 * 60 * 60 // 3600 seconds
       await vestingContract.addTokenVesting(
         alice.address,
@@ -286,19 +282,113 @@ describe("GoongVesting", function () {
     })
   })
 
-  describe.skip("remainingVestedAmount", async function () {
-    it("should returns 2000 when the recipient has 2000 initial locked amount and never claimed vested tokens", async function () {})
+  describe("remainingVestedAmount", async function () {
+    it("should returns 2000 when the recipient has 2000 initial locked amount and never claimed vested tokens", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp().then((seconds) => seconds)
+      const duration = 1 * 60 * 60 // 3600 seconds
+      const vestedAmount = ethers.utils.parseEther("2000")
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        duration,
+        vestedAmount
+      )
+      const remaining = await vestingContract.remainingVestedAmount(
+        alice.address
+      )
 
-    it("should returns 1000 when the recipient has 2000 initial locked amount and claimed amount is 1000", async function () {})
+      expect(remaining).to.be.eq(vestedAmount)
+    })
 
-    it("should returns 0 when the recipient never vested tokens", async function () {})
+    it("should returns 1000 when the recipient has 2000 initial locked amount and claimed amount is 1000", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp().then((seconds) => seconds)
+      const duration = 1 * 60 * 60 // 3600 seconds
+      const vestedAmount = ethers.utils.parseEther("2000")
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        duration,
+        vestedAmount
+      )
+
+      mine(duration / 2) // half of vesting period.
+
+      await vestingContract.connect(alice).claim()
+
+      const remaining = await vestingContract.remainingVestedAmount(
+        alice.address
+      )
+
+      expect(remaining).to.be.closeTo(
+        vestedAmount.div(2),
+        ethers.utils.parseEther("1")
+      )
+    })
+
+    it("should returns 0 when the recipient never vested tokens", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      const remaining = await vestingContract.remainingVestedAmount(
+        alice.address
+      )
+      expect(remaining).to.be.eq("0")
+    })
   })
 
-  describe.skip("claimableAmount", async function () {
-    it("should returns 1000 when the recipient has 1000 initial locked amount and current block.timestamp >= start date + duration", async function () {})
+  describe("claimableAmount", async function () {
+    it("should returns 1000 when the recipient has 1000 initial locked amount and current block.timestamp >= start date + duration", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp().then((seconds) => seconds)
+      const duration = 1 * 60 * 60 // 3600 seconds
+      const vestedAmount = ethers.utils.parseEther("1000")
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        duration,
+        vestedAmount
+      )
 
-    it("should returns 500 when the recipient has 1000 initial locked amount and current block.timestamp = start date + duration / 2", async function () {})
+      mine(duration)
 
-    it("should returns 0 when the recipient never locked amount", async function () {})
+      const claimableAmount = await vestingContract.claimableAmount(
+        alice.address
+      )
+
+      expect(claimableAmount).to.be.eq(vestedAmount)
+    })
+
+    it("should returns 500 when the recipient has 1000 initial locked amount and current block.timestamp = start date + duration / 2", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      await approveTokens([goong], vestingContract.address)
+      const startDate = await currentBlockTimestamp().then((seconds) => seconds)
+      const duration = 1 * 60 * 60 // 3600 seconds
+      const vestedAmount = ethers.utils.parseEther("1000")
+      await vestingContract.addTokenVesting(
+        alice.address,
+        startDate + 1,
+        duration,
+        vestedAmount
+      )
+
+      mine(duration / 2)
+
+      const claimableAmount = await vestingContract.claimableAmount(
+        alice.address
+      )
+
+      expect(claimableAmount).to.be.eq(vestedAmount.div(2))
+    })
+
+    it("should returns 0 when the recipient never locked amount", async function () {
+      const [owner, alice] = await ethers.getSigners()
+      const claimableAmount = await vestingContract.claimableAmount(
+        alice.address
+      )
+      expect(claimableAmount).to.be.eq("0")
+    })
   })
 })

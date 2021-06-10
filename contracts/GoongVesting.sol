@@ -17,7 +17,7 @@ contract GoongVesting is Ownable {
 
     mapping(address => VestingInfo) public vestingInfo;
 
-    uint256 constant MINIMUM_VESTED_AMOUNT = 1800 ether;
+    uint256 constant MINIMUM_VESTED_AMOUNT = 1000 ether;
 
     uint256 public minimumDuration;
 
@@ -68,7 +68,7 @@ contract GoongVesting is Ownable {
         );
         require(
             _amount >= MINIMUM_VESTED_AMOUNT,
-            "vested amount must be greater than 1800 goong"
+            "vested amount must be greater than 1000 goong"
         );
         require(_startDate >= block.timestamp, "start date cannot be the past");
 
