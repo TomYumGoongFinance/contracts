@@ -18,7 +18,7 @@ const TIMELOCK_ADDRESS = "0x8257a6B6cEF16b991081b2F78ed1F8589E9f2a49"
 const MASTERCHEF_ADDRESS = "0x38859FE372671128495c8e9c0d62cA3779981f39"
 const VESTING_ADDRESS = "0x111869266A80505d96937BcC074d373C8557D020"
 
-// const ONE_EGG = "1000000000000000000";
+const GOONG_MINT_AMOUNT = ethers.utils.parseEther("30000000") // 30M
 const EGG_PER_BLOCK = "5000000000000000000"
 
 async function configChecker() {
@@ -78,7 +78,10 @@ async function getContract(name, address) {
 async function check(contract, functionName, params, expectReturnValue) {
   try {
     const returnValue = await contract[functionName](...params)
-    if (expectReturnValue && expectReturnValue.toLowerCase() !== returnValue.toLowerCase()) {
+    if (
+      expectReturnValue &&
+      expectReturnValue.toLowerCase() !== returnValue.toLowerCase()
+    ) {
       return {
         result: false,
         contract,
@@ -117,5 +120,6 @@ module.exports = {
   BUSD,
   BNB,
   GOONG,
-  EGG_PER_BLOCK
+  EGG_PER_BLOCK,
+  GOONG_MINT_AMOUNT
 }
