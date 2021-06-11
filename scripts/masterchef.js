@@ -1,6 +1,13 @@
 const hre = require("hardhat")
 const { getLPAddress } = require("./libs/address")
-const { BUSD, BNB, GOONG, MASTERCHEF_ADDRESS } = require("./libs/config")
+const {
+  BUSD,
+  BNB,
+  GOONG,
+  MASTERCHEF_ADDRESS,
+  VOUCHER_RATE,
+  TIMELOCK_ADDRESS
+} = require("./libs/config")
 
 async function addPool(
   allocPoint,
@@ -29,6 +36,17 @@ async function setVoucherRate(rate = 10) {
   console.log("Executed transaction:", transaction.transactionHash)
 }
 
+async function transferOwnership(newOwner) {
+  const MasterChef = await hre.ethers.getContractFactory("MasterChefV3")
+  const masterchef = await MasterChef.attach(MASTERCHEF_ADDRESS)
+
+  const transaction = await masterchef
+    .transferOwnership(newOwner)
+    .then(({ wait }) => wait())
+
+  console.log("Executed transaction:", transaction.transactionHash)
+}
+
 const goongBusd = getLPAddress(GOONG, BUSD)
 const bnbBusd = getLPAddress(BNB, BUSD)
 const bnbGoong = getLPAddress(BNB, GOONG)
@@ -37,10 +55,12 @@ console.log("GOONG/BUSD", goongBusd)
 console.log("BNB/BUSD", bnbBusd)
 console.log("BNB/GOONG", bnbGoong)
 
-addPool(300, bnbGoong)
-  .then(() => addPool(200, goongBusd))
-  .then(() => addPool(100, bnbBusd, 200))
-  .then(() => setVoucherRate(10))
+// Todo add remaining pools
+addPool(4000, bnbGoong)
+  .then(() => addPool(3000, goongBusd))
+  .then(() => addPool(300, bnbBusd, 200))
+  .then(() => setVoucherRate(VOUCHER_RATE))
+  .then(() => transferOwnership(TIMELOCK_ADDRESS))
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)
