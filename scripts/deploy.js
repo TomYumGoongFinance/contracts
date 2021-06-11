@@ -47,13 +47,6 @@ async function deployMasterChef(goongToken) {
     BNB,
     BUSD
   ]
-  // const constructorParams = [
-  //   goongToken,
-  //   devAddress,
-  //   feeAddress,
-  //   EGG_PER_BLOCK,
-  //   startBlock
-  // ]
   const masterChef = await MasterChef.deploy(...constructorParams)
 
   await masterChef.deployed()

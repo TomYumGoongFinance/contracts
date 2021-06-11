@@ -19,7 +19,8 @@ const MASTERCHEF_ADDRESS = "0x38859FE372671128495c8e9c0d62cA3779981f39"
 const VESTING_ADDRESS = "0x111869266A80505d96937BcC074d373C8557D020"
 
 const GOONG_MINT_AMOUNT = ethers.utils.parseEther("30000000") // 30M
-const EGG_PER_BLOCK = "5000000000000000000"
+const EGG_PER_BLOCK = ethers.utils.parseEther("100")
+const VOUCHER_RATE = 2
 
 async function configChecker() {
   const ownerAddress = new ethers.Wallet(privateKey).address
@@ -121,5 +122,6 @@ module.exports = {
   BNB,
   GOONG,
   EGG_PER_BLOCK,
-  GOONG_MINT_AMOUNT
+  GOONG_MINT_AMOUNT,
+  VOUCHER_RATE
 }
