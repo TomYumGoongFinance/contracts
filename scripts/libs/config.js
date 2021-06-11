@@ -13,7 +13,7 @@ const BUSD = "0xf74c427ec673497b84fd6fd0800264fdaf6a2ff4"
 const BNB = "0xae13d989dac2f0debff460ac112a837c89baa7cd"
 const GOONG = "0xeD9589319B9980C3FF83D8fa72Cd9e28370D470A"
 
-// todo add more 10 tokens
+// todo add 10 more tokens
 
 // All evm-compatible chains
 // ===============================
