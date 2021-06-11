@@ -93,6 +93,8 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
     uint256 public totalAllocPoint = 0;
     // The block number when GOONG mining starts.
     uint256 public startBlock;
+    // Total goong locked using deposit without fee.
+    uint256 public totalGoongLocked = 0;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -259,6 +261,7 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         require(!isContract(), "caller must be EOA");
         uint256 goongAmount = calculateGoongCoverFee(_pid, _amount);
         egg.transferFrom(msg.sender, address(this), goongAmount);
+        totalGoongLocked = totalGoongLocked.add(goongAmount);
 
         voucherInfo[_pid][msg.sender] = voucherInfo[_pid][msg.sender].add(
             goongAmount
@@ -298,15 +301,18 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         if (pending > 0) {
             safeEggTransfer(msg.sender, pending);
         }
-        uint256 totalGoongLocked = voucherInfo[_pid][msg.sender];
-        if (totalGoongLocked > 0) {
+        uint256 _totalGoongLocked = voucherInfo[_pid][msg.sender];
+        if (_totalGoongLocked > 0) {
             uint256 goongAmount =
-                _amount.mul(totalGoongLocked).div(user.amount);
-            if (totalGoongLocked - goongAmount >= 0) {
-                voucherInfo[_pid][msg.sender] -= goongAmount;
+                _amount.mul(_totalGoongLocked).div(user.amount);
+            if (_totalGoongLocked - goongAmount >= 0) {
+                voucherInfo[_pid][msg.sender] = voucherInfo[_pid][msg.sender]
+                    .sub(goongAmount);
                 safeEggTransfer(msg.sender, goongAmount);
+                totalGoongLocked = totalGoongLocked.sub(goongAmount);
             } else {
-                safeEggTransfer(msg.sender, totalGoongLocked);
+                safeEggTransfer(msg.sender, _totalGoongLocked);
+                totalGoongLocked = totalGoongLocked.sub(_totalGoongLocked);
                 voucherInfo[_pid][msg.sender] = 0;
             }
         }
