@@ -6,17 +6,17 @@ const FACTORY_ADDRESS = "0x6725f303b657a9451d8ba641348b6761a6cc7a17"
 const INIT_CODE_HASH =
   "0xd0d4c4cd0848c93cb4fd1f498d7013ee6bfb25783ea21593d5834f5d250ece66"
 
-// used for adding pools
+// used for adding pool s
 const BUSD = "0xf74c427ec673497b84fd6fd0800264fdaf6a2ff4"
 const BNB = "0xae13d989dac2f0debff460ac112a837c89baa7cd"
-const GOONG = "0x14D3E60a9c963D325BAb04D76fb81BeB41C70751"
+const GOONG = "0xeD9589319B9980C3FF83D8fa72Cd9e28370D470A"
 
 const MINIMUM_DURATION = 60 * 60 * 24 * 7
 const DEV_ADDRESS = "0x0eD129E9a39668ACF9B79A8E38652E11d05Aa447"
 const FEE_ADDRESS = "0x31039307f90E6c99c6081d2BDD1383CD3e1c33A7"
-const TIMELOCK_ADDRESS = "0xf1DfA9C0d039Dfb8bdA24974F402dA5263Cb92F3"
-const MASTERCHEF_ADDRESS = "0x33782F6AB27c9EB51093D07153c91B3Aeddb37ef"
-const VESTING_ADDRESS = "0x7c5461E150444307155Fa6CF0Ff66126e4C7c5b6"
+const TIMELOCK_ADDRESS = "0x8257a6B6cEF16b991081b2F78ed1F8589E9f2a49"
+const MASTERCHEF_ADDRESS = "0x38859FE372671128495c8e9c0d62cA3779981f39"
+const VESTING_ADDRESS = "0x111869266A80505d96937BcC074d373C8557D020"
 
 // const ONE_EGG = "1000000000000000000";
 const EGG_PER_BLOCK = "5000000000000000000"
@@ -39,7 +39,7 @@ async function configChecker() {
     () => check(routerContract, "factory", []),
     () => check(factoryContract, "INIT_CODE_PAIR_HASH", []),
     () => check(timelockContract, "admin", [], ownerAddress),
-    () => check(masterChefContract, "devaddr", [], ownerAddress),
+    () => check(masterChefContract, "devaddr", [], DEV_ADDRESS),
     () => check(vestingContract, "owner", [], ownerAddress),
     () => check(busdContract, "symbol", [], "BUSD"),
     () => check(bnbContract, "symbol", [], "WBNB"),

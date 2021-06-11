@@ -5,6 +5,7 @@
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat")
 const { verifyContract } = require("./libs/verify")
+const { privateKey } = require("../secrets.json")
 const {
   EGG_PER_BLOCK,
   BNB,
@@ -91,8 +92,9 @@ async function deployVesting() {
 }
 
 async function deployTimelock() {
+  const ownerAddress = new ethers.Wallet(privateKey).address
   const Timelock = await hre.ethers.getContractFactory("Timelock")
-  const constructorParams = [DEV_ADDRESS, 30] // delay 6 hours
+  const constructorParams = [ownerAddress, 30] // delay 6 hours
   const timelock = await Timelock.deploy(...constructorParams)
 
   await timelock.deployed()
