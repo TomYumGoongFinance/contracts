@@ -11,7 +11,7 @@ const INIT_CODE_HASH =
 // used for adding pools
 const BUSD = "0xf74c427ec673497b84fd6fd0800264fdaf6a2ff4"
 const BNB = "0xae13d989dac2f0debff460ac112a837c89baa7cd"
-const GOONG = "0xeD9589319B9980C3FF83D8fa72Cd9e28370D470A"
+const GOONG = "0x480Aa0d8475e138318a03f65387585e936a7D4Ec"
 
 // todo add 10 more tokens
 
@@ -26,9 +26,9 @@ const DEV_1_ADDRESS = "0x22628B570B9Ff5E82e375037a158154e7900f79f"
 const DEV_2_ADDRESS = "0x3C0C5Cec986F0Df6870dB8858ab8E8f2567d7508" // Edit later
 const MARKETING_ADDRESS = "0x2C98DE30B50815652e2AA6d4B4e7d647ab9C81C0"
 const ECOSYSTEM_ADDRESS = "0x06babDD13B6804DdBb47Bef9E3638Df69F5cE32b"
-const TIMELOCK_ADDRESS = "0x8257a6B6cEF16b991081b2F78ed1F8589E9f2a49"
-const MASTERCHEF_ADDRESS = "0x38859FE372671128495c8e9c0d62cA3779981f39"
-const VESTING_ADDRESS = "0x111869266A80505d96937BcC074d373C8557D020"
+const TIMELOCK_ADDRESS = "0x353A40551e1629BcD88140042AD2bD5d9747e6EC"
+const MASTERCHEF_ADDRESS = "0x4E5E015D3463b7c23E8638aa8aD7C5B8fd15479f"
+const VESTING_ADDRESS = "0xe009D0e8B3c62fb8578b7fA62A19F9FBF100b8Ed"
 
 const MASTERCHEF_START_DATE = parseInt(new Date().getTime() / 1000) + 60 // seconds, edit later
 const MASTERCHEF_START_BLOCK = 0 // edit later
@@ -87,7 +87,7 @@ async function configChecker() {
 }
 
 async function getStartBlock(nextBlocks) {
-  await hre.network.provider
+  return hre.network.provider
     .send("eth_blockNumber")
     .then(parseInt)
     .then((block) => block + nextBlocks)

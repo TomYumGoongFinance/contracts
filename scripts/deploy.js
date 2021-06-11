@@ -37,10 +37,11 @@ async function deployMasterChef(goongToken) {
     DEV_ADDRESS,
     FEE_ADDRESS,
     EGG_PER_BLOCK,
-    MASTERCHEF_START_BLOCK || startBlock,
+    MASTERCHEF_START_BLOCK === 0 ? startBlock : MASTERCHEF_START_BLOCK,
     BNB,
     BUSD
   ]
+  console.log(constructorParams)
   const masterChef = await MasterChef.deploy(...constructorParams)
 
   await masterChef.deployed()
@@ -103,9 +104,9 @@ async function deployTimelock() {
  */
 deployGoongToken()
   .then(verifyContract)
-  .then(deployVesting)
-  .then(verifyContract)
   .then(deployMasterChef)
+  .then(verifyContract)
+  .then(deployVesting)
   .then(verifyContract)
   .then(deployTimelock)
   .then(verifyContract)

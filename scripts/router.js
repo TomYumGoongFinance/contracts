@@ -48,8 +48,8 @@ approveToken(GOONG)
   .then(() =>
     addEthLP(
       GOONG,
-      ethers.utils.parseEther("20000"),
-      ethers.utils.parseEther("0.5")
+      ethers.utils.parseEther("10000"),
+      ethers.utils.parseEther("0.1")
     )
   )
   .then(() =>
