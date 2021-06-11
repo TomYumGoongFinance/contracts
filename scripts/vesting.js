@@ -1,22 +1,41 @@
 const hre = require("hardhat")
-const { verifyContract } = require("./libs/verify")
-const { GOONG, MINIMUM_DURATION } = require("./libs/config")
+const {
+  GOONG,
+  VESTING_ADDRESS,
+  DEV_1_ADDRESS,
+  MASTERCHEF_START_DATE,
+  ECOSYSTEM_ADDRESS,
+  BURN_ADDRESS
+} = require("./libs/config")
 const { ethers } = require("hardhat")
+const { currentBlockTimestamp } = require("./libs/rpc")
 
-async function deployVesting(goong) {
+const SIX_MONTHS = 60 * 60 * 24 * 180
+
+async function vest(recipient, startDate, duration, amount) {
   const GoongVesting = await ethers.getContractFactory("GoongVesting")
-  const params = [goong, MINIMUM_DURATION]
-  const vesting = await GoongVesting.deploy(...params)
-  await vesting.deployed()
+  const vesting = await GoongVesting.attach(VESTING_ADDRESS)
 
-  return {
-    contractAddress: vesting.address,
-    params
-  }
+  const transaction = await vesting
+    .addTokenVesting(recipient, startDate, duration, amount)
+    .then(({ wait }) => wait())
+
+  console.log("Executed transaction:", transaction.transactionHash)
 }
 
-deployVesting(GOONG)
-  .then(verifyContract)
+const dev1Amount = ethers.utils.parseEther("1000000")
+const dev2Amount = ethers.utils.parseEther("1000000")
+const ecosystemAmount = ethers.utils.parseEther("7990000")
+const burnAmount = ethers.utils.parseEther("18000000")
+
+vest(DEV_1_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, dev1Amount)
+  .then(() =>
+    vest(DEV_2_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, dev2Amount)
+  )
+  .then(() =>
+    vest(ECOSYSTEM_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, ecosystemAmount)
+  )
+  .then(() => vest(BURN_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, burnAmount))
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)
