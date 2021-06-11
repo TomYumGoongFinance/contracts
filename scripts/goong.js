@@ -1,9 +1,10 @@
-const hre = require("hardhat")
+const hre= require("hardhat")
 const {
   GOONG,
   GOONG_MINT_AMOUNT,
   MASTERCHEF_ADDRESS,
-  MARKETING_ADDRESS
+  MARKETING_ADDRESS,
+  VESTING_ADDRESS
 } = require("./libs/config")
 
 async function mint(amount) {
@@ -39,11 +40,20 @@ async function transfer(recipient, amount) {
   console.log("Executed transaction:", transaction.transactionHash)
 }
 
-const marketingAmount = ethers.utils.parseEther("2000000")
+async function approve(spender) {
+  const Goong = await hre.ethers.getContractFactory("GoongToken")
+  const goong = await Goong.attach(GOONG)
+
+  const transaction = await goong
+    .approve(spender, ethers.constants.MaxUint256)
+    .then(({ wait }) => wait())
+
+  console.log("Executed transaction:", transaction.transactionHash)
+}
 
 mint(GOONG_MINT_AMOUNT)
-  .then(() => transferOwnership(MASTERCHEF_ADDRESS))
-  .then(() => transfer(MARKETING_ADDRESS, marketingAmount))
+.then(() => transferOwnership(MASTERCHEF_ADDRESS))
+.then(() => approve(VESTING_ADDRESS))
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)

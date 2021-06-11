@@ -1,6 +1,8 @@
 const { ethers } = require("hardhat")
 const { privateKey } = require("../../secrets.json")
+
 // BSC Testnet
+// ==============================
 const ROUTER_ADDRESS = "0xD99D1c33F9fC3444f8101754aBC46c52416550D1"
 const FACTORY_ADDRESS = "0x6725f303b657a9451d8ba641348b6761a6cc7a17"
 const INIT_CODE_HASH =
@@ -11,7 +13,12 @@ const BUSD = "0xf74c427ec673497b84fd6fd0800264fdaf6a2ff4"
 const BNB = "0xae13d989dac2f0debff460ac112a837c89baa7cd"
 const GOONG = "0xeD9589319B9980C3FF83D8fa72Cd9e28370D470A"
 
-const MINIMUM_DURATION = 60 * 60 * 24 * 7
+// todo add more 10 tokens
+
+// All evm-compatible chains
+// ===============================
+
+// Addresses
 const DEV_ADDRESS = "0x0eD129E9a39668ACF9B79A8E38652E11d05Aa447"
 const BURN_ADDRESS = "0x0eD129E9a39668ACF9B79A8E38652E11d05Aa447" // same as dev address
 const FEE_ADDRESS = "0x31039307f90E6c99c6081d2BDD1383CD3e1c33A7"
@@ -23,8 +30,9 @@ const TIMELOCK_ADDRESS = "0x8257a6B6cEF16b991081b2F78ed1F8589E9f2a49"
 const MASTERCHEF_ADDRESS = "0x38859FE372671128495c8e9c0d62cA3779981f39"
 const VESTING_ADDRESS = "0x111869266A80505d96937BcC074d373C8557D020"
 
-const MASTERCHEF_START_DATE = new Date().getTime()
-
+const MASTERCHEF_START_DATE = parseInt(new Date().getTime() / 1000) + 60 // seconds, edit later
+const MASTERCHEF_START_BLOCK = 0 // edit later
+const MINIMUM_DURATION = 60 * 60 * 24 * 7
 const GOONG_MINT_AMOUNT = ethers.utils.parseEther("30000000") // 30M
 const EGG_PER_BLOCK = ethers.utils.parseEther("100")
 const VOUCHER_RATE = 2
@@ -78,6 +86,13 @@ async function configChecker() {
   }
 }
 
+async function getStartBlock(nextBlocks) {
+  await hre.network.provider
+    .send("eth_blockNumber")
+    .then(parseInt)
+    .then((block) => block + nextBlocks)
+}
+
 async function getContract(name, address) {
   const contract = await ethers.getContractFactory(name)
   return contract.attach(address)
@@ -117,8 +132,10 @@ async function check(contract, functionName, params, expectReturnValue) {
 
 module.exports = {
   configChecker,
+  getStartBlock,
   ROUTER_ADDRESS,
   FACTORY_ADDRESS,
+  VESTING_ADDRESS,
   DEV_ADDRESS,
   FEE_ADDRESS,
   BURN_ADDRESS,
@@ -133,6 +150,7 @@ module.exports = {
   BUSD,
   BNB,
   GOONG,
+  MASTERCHEF_START_BLOCK,
   MASTERCHEF_START_DATE,
   EGG_PER_BLOCK,
   GOONG_MINT_AMOUNT,

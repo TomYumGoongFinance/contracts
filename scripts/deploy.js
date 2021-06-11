@@ -1,8 +1,3 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
 const hre = require("hardhat")
 const { verifyContract } = require("./libs/verify")
 const { privateKey } = require("../secrets.json")
@@ -12,7 +7,9 @@ const {
   BUSD,
   FEE_ADDRESS,
   DEV_ADDRESS,
-  MINIMUM_DURATION
+  MINIMUM_DURATION,
+  MASTERCHEF_START_BLOCK,
+  getStartBlock
 } = require("./libs/config")
 
 let goongAddress
@@ -34,16 +31,13 @@ async function deployGoongToken() {
 
 async function deployMasterChef(goongToken) {
   const MasterChef = await hre.ethers.getContractFactory("MasterChefV3")
-  const currentBlock = await hre.network.provider
-    .send("eth_blockNumber")
-    .then(parseInt)
-  const startBlock = currentBlock + 40 // 2 mins later
+  const startBlock = await getStartBlock(40)
   const constructorParams = [
     goongToken,
     DEV_ADDRESS,
     FEE_ADDRESS,
     EGG_PER_BLOCK,
-    startBlock,
+    MASTERCHEF_START_BLOCK || startBlock,
     BNB,
     BUSD
   ]
@@ -59,18 +53,18 @@ async function deployMasterChef(goongToken) {
   }
 }
 
-async function deployMulticall() {
-  const Multicall = await hre.ethers.getContractFactory("Multicall")
-  const multicall = await Multicall.deploy()
+// async function deployMulticall() {
+//   const Multicall = await hre.ethers.getContractFactory("Multicall")
+//   const multicall = await Multicall.deploy()
 
-  await multicall.deployed()
+//   await multicall.deployed()
 
-  console.log("Multicall deployed to:", multicall.address)
+//   console.log("Multicall deployed to:", multicall.address)
 
-  return {
-    contractAddress: multicall.address
-  }
-}
+//   return {
+//     contractAddress: multicall.address
+//   }
+// }
 
 async function deployVesting() {
   const GoongVesting = await ethers.getContractFactory("GoongVesting")

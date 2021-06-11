@@ -1,14 +1,13 @@
 const hre = require("hardhat")
 const {
-  GOONG,
   VESTING_ADDRESS,
   DEV_1_ADDRESS,
+  DEV_2_ADDRESS,
   MASTERCHEF_START_DATE,
   ECOSYSTEM_ADDRESS,
   BURN_ADDRESS
 } = require("./libs/config")
 const { ethers } = require("hardhat")
-const { currentBlockTimestamp } = require("./libs/rpc")
 
 const SIX_MONTHS = 60 * 60 * 24 * 180
 

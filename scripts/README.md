@@ -33,7 +33,7 @@ The script will send the following transactions to goong contract:
 
 1. Mint 30M Goong
 2. Transfer ownership to MasterChefV3 contract
-3. Transfer 2M Goong to marketing wallet
+3. Approve Goong to Vesting contract
 
 ## 3. Setup MasterChefV3 Contract
 
@@ -43,8 +43,8 @@ If everything looks ok, then, runs `npm run masterchef mainnet`
 
 The script will send the following transactions to masterchef contract:
 
-1. Set `voucherRate` = 2
-2. Add 12 pools (see: https://docs.tomyumgoong.finance/tomyumgoong/farm)
+1. Add 12 pools (see: https://docs.tomyumgoong.finance/tomyumgoong/farm)
+2. Set `voucherRate` = 2
 3. Set `eggPerBlock` = 100
 4. Transfer ownership to Timelock contract
 
