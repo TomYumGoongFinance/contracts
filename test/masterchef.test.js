@@ -678,4 +678,112 @@ describe("MasterChefV3", function () {
       expect(totalSupply).to.be.eq(initialSupply)
     })
   })
+
+  describe("totalGoongLocked", async function () {
+    let masterChef
+    beforeEach(async () => {
+      global.showLog = false
+      await setupTests()
+      const { goong, weth, busd } = global
+
+      let [owner, feeAccount, alice] = await ethers.getSigners()
+
+      const MasterChef = await ethers.getContractFactory("MasterChefV3")
+      const currentBlock = await ethers.getDefaultProvider().getBlockNumber()
+      const startBlock = currentBlock + 1
+      const eggPerBlock = "1000000000000000000" // 1 EGG
+      const constructorParams = [
+        goong.address,
+        owner.address,
+        feeAccount.address,
+        eggPerBlock,
+        startBlock,
+        weth.address,
+        busd.address
+      ]
+      masterChef = await MasterChef.deploy(...constructorParams)
+      await masterChef.deployed()
+      log("Deployed MasterChefV3:", chalk.greenBright(masterChef.address))
+
+      // 1. Set voucher rate
+      await masterChef.setVoucherRate(10)
+
+      // 2. Transfer goong ownership
+      await goong.transferOwnership(masterChef.address)
+
+      // 3. Send busd and goong from owner account to alice account
+      const goongAmount = ethers.utils.parseEther("10000")
+      const busdAmount = ethers.utils.parseEther("10000")
+      await goong.transfer(alice.address, goongAmount)
+      await busd.transfer(alice.address, busdAmount)
+    })
+
+    it("should increase totalGoongLocked by 4000 given depositWithoutFee 10000 GOONG / 10000 BUSD LP", async function () {
+      const [_owner, _dev, alice] = await ethers.getSigners()
+      const { goong, busd, pancakeRouter } = global
+      const lpAddress = await getLPAddress(goong.address, busd.address)
+      await addLiquidity(pancakeRouter, {
+        tokenA: goong,
+        tokenB: busd,
+        tokenAmountA: ethers.utils.parseEther("10000"),
+        tokenAmountB: ethers.utils.parseEther("10000"),
+        senderAddress: alice.address
+      })
+      const PancakePair = await ethers.getContractFactory("PancakePair")
+      const pair = PancakePair.attach(lpAddress)
+
+      const { amount: beforeStakedLP } = await masterChef.userInfo(
+        0,
+        alice.address
+      )
+
+      await approveTokens(
+        [goong.connect(alice), pair.connect(alice)],
+        masterChef.address
+      )
+      await masterChef.add(0, lpAddress, 200, false)
+      const aliceLPAmount = await balanceOfLP(busd, goong, alice.address)
+      const totalGoongLockedBeforeDeposit = await masterChef.totalGoongLocked()
+      expect(totalGoongLockedBeforeDeposit).to.be.eq("0")
+      await masterChef.connect(alice).depositWithoutFee(0, aliceLPAmount)
+      const totalGoongLockedAfterDeposit = await masterChef.totalGoongLocked()
+      expect(totalGoongLockedAfterDeposit).to.be.eq(
+        ethers.utils.parseEther("4000")
+      )
+    })
+
+    it("should decrease totalGoongLocked by 4000 given withdraw 10000 GOONG / 10000 BUSD LP", async function () {
+      const [_owner, _dev, alice] = await ethers.getSigners()
+      const { goong, busd, pancakeRouter } = global
+      const lpAddress = await getLPAddress(goong.address, busd.address)
+      await addLiquidity(pancakeRouter, {
+        tokenA: goong,
+        tokenB: busd,
+        tokenAmountA: ethers.utils.parseEther("10000"),
+        tokenAmountB: ethers.utils.parseEther("10000"),
+        senderAddress: alice.address
+      })
+      const PancakePair = await ethers.getContractFactory("PancakePair")
+      const pair = PancakePair.attach(lpAddress)
+
+      const { amount: beforeStakedLP } = await masterChef.userInfo(
+        0,
+        alice.address
+      )
+
+      await approveTokens(
+        [goong.connect(alice), pair.connect(alice)],
+        masterChef.address
+      )
+      await masterChef.add(0, lpAddress, 200, false)
+      const aliceLPAmount = await balanceOfLP(busd, goong, alice.address)
+      const totalGoongLockedBeforeDeposit = await masterChef.totalGoongLocked()
+      await masterChef.connect(alice).depositWithoutFee(0, aliceLPAmount)
+      await masterChef.connect(alice).withdraw(0, aliceLPAmount)
+      const totalGoongLockedAfterWithdraw = await masterChef.totalGoongLocked()
+      expect(totalGoongLockedBeforeDeposit).to.be.eq(
+        totalGoongLockedAfterWithdraw
+      )
+    })
+  })
 })
