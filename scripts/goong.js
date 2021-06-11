@@ -2,7 +2,8 @@ const hre = require("hardhat")
 const {
   GOONG,
   GOONG_MINT_AMOUNT,
-  MASTERCHEF_ADDRESS
+  MASTERCHEF_ADDRESS,
+  MARKETING_ADDRESS
 } = require("./libs/config")
 
 async function mint(amount) {
@@ -27,8 +28,22 @@ async function transferOwnership(newOwner) {
   console.log("Executed transaction:", transaction.transactionHash)
 }
 
+async function transfer(recipient, amount) {
+  const Goong = await hre.ethers.getContractFactory("GoongToken")
+  const goong = await Goong.attach(GOONG)
+
+  const transaction = await goong
+    .transfer(recipient, amount)
+    .then(({ wait }) => wait())
+
+  console.log("Executed transaction:", transaction.transactionHash)
+}
+
+const marketingAmount = ethers.utils.parseEther("2000000")
+
 mint(GOONG_MINT_AMOUNT)
   .then(() => transferOwnership(MASTERCHEF_ADDRESS))
+  .then(() => transfer(MARKETING_ADDRESS, marketingAmount))
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)
