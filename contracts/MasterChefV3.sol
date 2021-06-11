@@ -97,6 +97,12 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
     uint256 public totalGoongLocked = 0;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
+    event DepositWithoutFee(
+        address indexed user,
+        uint256 indexed pid,
+        uint256 amount,
+        uint256 goongAmount
+    );
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(
         address indexed user,
@@ -268,6 +274,8 @@ contract MasterChefV3 is Ownable, ReentrancyGuard {
         );
 
         _deposit(_pid, _amount, true);
+
+        emit DepositWithoutFee(msg.sender, _pid, _amount, goongAmount);
     }
 
     /**
