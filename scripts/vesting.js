@@ -3,7 +3,7 @@ const {
   VESTING_ADDRESS,
   DEV_1_ADDRESS,
   DEV_2_ADDRESS,
-  MASTERCHEF_START_DATE,
+  VESTING_START_DATE,
   ECOSYSTEM_ADDRESS,
   BURN_ADDRESS
 } = require("./libs/config")
@@ -27,14 +27,12 @@ const dev2Amount = ethers.utils.parseEther("1000000")
 const ecosystemAmount = ethers.utils.parseEther("7990000")
 const burnAmount = ethers.utils.parseEther("18000000")
 
-vest(DEV_1_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, dev1Amount)
+vest(DEV_1_ADDRESS, VESTING_START_DATE, SIX_MONTHS, dev1Amount)
+  .then(() => vest(DEV_2_ADDRESS, VESTING_START_DATE, SIX_MONTHS, dev2Amount))
   .then(() =>
-    vest(DEV_2_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, dev2Amount)
+    vest(ECOSYSTEM_ADDRESS, VESTING_START_DATE, SIX_MONTHS, ecosystemAmount)
   )
-  .then(() =>
-    vest(ECOSYSTEM_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, ecosystemAmount)
-  )
-  .then(() => vest(BURN_ADDRESS, MASTERCHEF_START_DATE, SIX_MONTHS, burnAmount))
+  .then(() => vest(BURN_ADDRESS, VESTING_START_DATE, SIX_MONTHS, burnAmount))
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)

@@ -1,7 +1,7 @@
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
 
-describe("GoongToken", async function () {
+describe.skip("GoongToken", async function () {
   let goong
   beforeEach(async () => {
     const GoongToken = await ethers.getContractFactory("GoongToken")

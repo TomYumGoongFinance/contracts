@@ -3,7 +3,7 @@ const { ethers, network } = require("hardhat")
 const { approveTokens } = require("./libs/token")
 const { mine, currentBlock, currentBlockTimestamp } = require("./libs/rpc")
 
-describe("GoongVesting", function () {
+describe.skip("GoongVesting", function () {
   let vestingContract, goong
   const hour = 3600
   beforeEach(async () => {

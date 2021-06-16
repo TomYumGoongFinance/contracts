@@ -3,7 +3,6 @@ const {
   GOONG,
   GOONG_MINT_AMOUNT,
   MASTERCHEF_ADDRESS,
-  MARKETING_ADDRESS,
   VESTING_ADDRESS
 } = require("./libs/config")
 

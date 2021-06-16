@@ -631,6 +631,7 @@ interface IWETH {
 // File: contracts\PancakeRouter.sol
 
 pragma solidity =0.6.12;
+import "hardhat/console.sol";
 
 contract PancakeRouter is IPancakeRouter02 {
     using SafeMath for uint256;

@@ -9,8 +9,10 @@ const {
   DEV_ADDRESS,
   MINIMUM_DURATION,
   MASTERCHEF_START_BLOCK,
-  getStartBlock
+  getStartBlock,
+  ROUTER_ADDRESS
 } = require("./libs/config")
+const { green } = require("chalk")
 
 let goongAddress
 
@@ -54,19 +56,6 @@ async function deployMasterChef(goongToken) {
   }
 }
 
-// async function deployMulticall() {
-//   const Multicall = await hre.ethers.getContractFactory("Multicall")
-//   const multicall = await Multicall.deploy()
-
-//   await multicall.deployed()
-
-//   console.log("Multicall deployed to:", multicall.address)
-
-//   return {
-//     contractAddress: multicall.address
-//   }
-// }
-
 async function deployVesting() {
   const GoongVesting = await ethers.getContractFactory("GoongVesting")
   const params = [goongAddress, MINIMUM_DURATION]
@@ -82,7 +71,7 @@ async function deployVesting() {
 async function deployTimelock() {
   const ownerAddress = new ethers.Wallet(privateKey).address
   const Timelock = await hre.ethers.getContractFactory("Timelock")
-  const constructorParams = [ownerAddress, 30] // delay 6 hours
+  const constructorParams = [ownerAddress, 60 * 60 * 24] // delay 24 hours
   const timelock = await Timelock.deploy(...constructorParams)
 
   await timelock.deployed()
@@ -95,6 +84,20 @@ async function deployTimelock() {
   }
 }
 
+async function deployGoongIllusion() {
+  const GoongIllusion = await ethers.getContractFactory("GoongIllusion")
+  const goongIllusion = await GoongIllusion.deploy(ROUTER_ADDRESS)
+
+  await goongIllusion.deployed()
+
+  console.log("GoongIllusion deployed to:", goongIllusion.address)
+
+  return {
+    contractAddress: goongIllusion.address,
+    params: [ROUTER_ADDRESS]
+  }
+}
+
 /**
  * Deploy and verify:
  * 1. GoongToken
@@ -102,14 +105,24 @@ async function deployTimelock() {
  * 3. MasterChef
  * 4. Timelock
  */
-deployGoongToken()
-  .then(verifyContract)
-  .then(deployMasterChef)
-  .then(verifyContract)
-  .then(deployVesting)
-  .then(verifyContract)
-  .then(deployTimelock)
-  .then(verifyContract)
+// deployGoongToken()
+//   .then(verifyContract)
+//   .then(deployMasterChef)
+//   .then(verifyContract)
+//   .then(deployVesting)
+//   .then(verifyContract)
+//   .then(deployTimelock)
+//   .then(verifyContract)
+//   .then(() => process.exit(0))
+//   .catch((error) => {
+//     console.error(error)
+//     process.exit(1)
+//   })
+
+// deployGoongToken()
+// .then(verifyContract)
+deployGoongIllusion()
+  // .then(verifyContract)
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)

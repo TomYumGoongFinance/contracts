@@ -1,19 +1,45 @@
 const { ethers } = require("hardhat")
 const { privateKey } = require("../../secrets.json")
+require("dotenv").config()
 
 // BSC Testnet
 // ==============================
-const ROUTER_ADDRESS = "0xD99D1c33F9fC3444f8101754aBC46c52416550D1"
-const FACTORY_ADDRESS = "0x6725f303b657a9451d8ba641348b6761a6cc7a17"
-const INIT_CODE_HASH =
-  "0xd0d4c4cd0848c93cb4fd1f498d7013ee6bfb25783ea21593d5834f5d250ece66"
+const ROUTER_ADDRESS = process.env.ROUTER_ADDRESS
+const FACTORY_ADDRESS = process.env.FACTORY_ADDRESS
+const INIT_CODE_HASH = process.env.INIT_CODE_HASH
+
+
+// BSC Mainnet
+// ==============================
+// const ROUTER_ADDRESS = "0x10ED43C718714eb63d5aA57B78B54704E256024E"
+// const FACTORY_ADDRESS = "0xca143ce32fe78f1f7019d7d551a6402fc5350c73"
+// const INIT_CODE_HASH =
+//   "0x00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5"
 
 // used for adding pools
-const BUSD = "0xf74c427ec673497b84fd6fd0800264fdaf6a2ff4"
-const BNB = "0xae13d989dac2f0debff460ac112a837c89baa7cd"
-const GOONG = "0x480Aa0d8475e138318a03f65387585e936a7D4Ec"
+// BSC Testnet
+// ==============
+const BUSD = process.env.BUSD
+const BNB = process.env.BNB
+const GOONG = process.env.GOONG
+const FAKE_GOONG = process.env.FAKE_GOONG
+const ETH_LP_AMOUNT = process.env.ETH_LP_AMOUNT
+const TARGET_PRICE = process.env.TARGET_PRICE
 
-// todo add 10 more tokens
+// BSC Mainnet
+// const BUSD = "0xe9e7cea3dedca5984780bafc599bd69add087d56"
+// const BNB = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"
+// const GOONG = "0x2afAB709fEAC97e2263BEd78d94aC2951705dB50"
+const USDT = "0x55d398326f99059ff775485246999027b3197955"
+const DOT = "0x7083609fce4d1d8dc0c979aab8c869ea2c873402"
+const CAKE = "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82"
+const UNI = "0xbf5140a22578168fd562dccf235e5d43a02ce9b1"
+const ADA = "0x3ee2200efb3400fabb9aacf31297cbdd1d435d47"
+const DOGE = "0xba2ae424d960c26247dd6c32edc70b295c744c43"
+const ALPHA = "0xa1faa113cbe53436df28ff0aee54275c13b40975"
+const BAND = "0xad6caeb32cd2c308980a548bd0bc5aa4306c6c18"
+const BTCB = "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c"
+const ETH = "0x2170ed0880ac9a755fd29b2688956bd959f933f8"
 
 // All evm-compatible chains
 // ===============================
@@ -23,19 +49,26 @@ const DEV_ADDRESS = "0x0eD129E9a39668ACF9B79A8E38652E11d05Aa447"
 const BURN_ADDRESS = "0x0eD129E9a39668ACF9B79A8E38652E11d05Aa447" // same as dev address
 const FEE_ADDRESS = "0x31039307f90E6c99c6081d2BDD1383CD3e1c33A7"
 const DEV_1_ADDRESS = "0x22628B570B9Ff5E82e375037a158154e7900f79f"
-const DEV_2_ADDRESS = "0x3C0C5Cec986F0Df6870dB8858ab8E8f2567d7508" // Edit later
-const MARKETING_ADDRESS = "0x2C98DE30B50815652e2AA6d4B4e7d647ab9C81C0"
+const DEV_2_ADDRESS = "0xd127a9f6e7D8D3A3B66e39A024ff102df0B8a65B"
 const ECOSYSTEM_ADDRESS = "0x06babDD13B6804DdBb47Bef9E3638Df69F5cE32b"
-const TIMELOCK_ADDRESS = "0x353A40551e1629BcD88140042AD2bD5d9747e6EC"
-const MASTERCHEF_ADDRESS = "0x4E5E015D3463b7c23E8638aa8aD7C5B8fd15479f"
-const VESTING_ADDRESS = "0xe009D0e8B3c62fb8578b7fA62A19F9FBF100b8Ed"
 
-const MASTERCHEF_START_DATE = parseInt(new Date().getTime() / 1000) + 60 // seconds, edit later
-const MASTERCHEF_START_BLOCK = 0 // edit later
-const MINIMUM_DURATION = 60 * 60 * 24 * 7
+// Contract addresses
+const TIMELOCK_ADDRESS = "0x0b38D64b22D3c968A3aE26B4C3C56dE3d5699831"
+const MASTERCHEF_ADDRESS = "0xdee8271179DCFB82e488c46060f022C48E61F327"
+const VESTING_ADDRESS = "0x8b84C45b3891f714eb21aE1d39348F2D83848566"
+const GOONG_ILLUSION_ADDRESS = "0xe94fa84a452fDfb83D8Cb2dcbB3b8D505452573c"
+
+// Masterchef Configs
+const MASTERCHEF_START_BLOCK = 8349752 // BSC Mainnet, Wed Jun 16 2021 14:00:00 PM UTC
 const GOONG_MINT_AMOUNT = ethers.utils.parseEther("30000000") // 30M
 const EGG_PER_BLOCK = ethers.utils.parseEther("100")
 const VOUCHER_RATE = 2
+
+// Vesting Configs
+const VESTING_START_DATE = parseInt(
+  new Date("2021-06-16 14:00 UTC").getTime() / 1000 // Wed Jun 16 2021 14:00:00 PM UTC
+)
+const MINIMUM_DURATION = 60 * 60 * 24 * 7
 
 async function configChecker() {
   const ownerAddress = new ethers.Wallet(privateKey).address
@@ -50,30 +83,50 @@ async function configChecker() {
   const busdContract = await getContract("BEP20", BUSD)
   const bnbContract = await getContract("BEP20", BNB)
   const goongContract = await getContract("BEP20", GOONG)
+  const usdtContract = await getContract("BEP20", USDT)
+  const dotContract = await getContract("BEP20", DOT)
+  const cakeContract = await getContract("BEP20", CAKE)
+  const uniContract = await getContract("BEP20", UNI)
+  const adaContract = await getContract("BEP20", ADA)
+  const dogeContract = await getContract("BEP20", DOGE)
+  const alphaContract = await getContract("BEP20", ALPHA)
+  const bandContract = await getContract("BEP20", BAND)
+  const btcbContract = await getContract("BEP20", BTCB)
+  const ethContract = await getContract("BEP20", ETH)
 
   const calls = [
-    () => check(routerContract, "factory", []),
+    () => check(routerContract, "factory", [], FACTORY_ADDRESS),
     () => check(factoryContract, "INIT_CODE_PAIR_HASH", []),
-    () => check(timelockContract, "admin", [], ownerAddress),
-    () => check(masterChefContract, "devaddr", [], DEV_ADDRESS),
-    () => check(vestingContract, "owner", [], ownerAddress),
     () => check(busdContract, "symbol", [], "BUSD"),
     () => check(bnbContract, "symbol", [], "WBNB"),
-    () => check(goongContract, "symbol", [], "GOONG")
+    () => check(goongContract, "symbol", [], "GOONG"),
+    () => check(usdtContract, "symbol", [], "USDT"),
+    () => check(dotContract, "symbol", [], "DOT"),
+    () => check(cakeContract, "symbol", [], "CAKE"),
+    () => check(uniContract, "symbol", [], "UNI"),
+    () => check(adaContract, "symbol", [], "ADA"),
+    () => check(dogeContract, "symbol", [], "DOGE"),
+    () => check(alphaContract, "symbol", [], "ALPHA"),
+    () => check(bandContract, "symbol", [], "BAND"),
+    () => check(btcbContract, "symbol", [], "BTCB"),
+    () => check(ethContract, "symbol", [], "ETH"),
+    () => check(timelockContract, "admin", [], ownerAddress),
+    () => check(masterChefContract, "devaddr", [], DEV_ADDRESS),
+    () => check(vestingContract, "owner", [], ownerAddress)
   ]
 
   for (call of calls) {
     const response = await call()
     if (response.functionName === "INIT_CODE_PAIR_HASH") {
       if (INIT_CODE_HASH === response.returnValue) {
-        console.log("config.INIT_CODE_PAIR_HASH pass")
+        console.log("INIT_CODE_PAIR_HASH pass")
       } else {
         throw new Error(`INIT_CODE_PAIR_HASH fail`)
       }
     } else if (response.functionName === "symbol") {
       if (response.result) {
         console.log(
-          `config.${response.returnValue} at ${response.contract.address} pass`
+          `${response.returnValue} at ${response.contract.address} pass`
         )
       } else {
         throw new Error(`config address at ${response.contract.address} fail`)
@@ -136,12 +189,12 @@ module.exports = {
   ROUTER_ADDRESS,
   FACTORY_ADDRESS,
   VESTING_ADDRESS,
+  GOONG_ILLUSION_ADDRESS,
   DEV_ADDRESS,
   FEE_ADDRESS,
   BURN_ADDRESS,
   DEV_1_ADDRESS,
   DEV_2_ADDRESS,
-  MARKETING_ADDRESS,
   ECOSYSTEM_ADDRESS,
   MINIMUM_DURATION,
   TIMELOCK_ADDRESS,
@@ -150,9 +203,22 @@ module.exports = {
   BUSD,
   BNB,
   GOONG,
+  FAKE_GOONG,
+  USDT,
+  DOT,
+  CAKE,
+  UNI,
+  ADA,
+  DOGE,
+  ALPHA,
+  BAND,
+  BTCB,
+  ETH,
   MASTERCHEF_START_BLOCK,
-  MASTERCHEF_START_DATE,
+  VESTING_START_DATE,
   EGG_PER_BLOCK,
   GOONG_MINT_AMOUNT,
+  ETH_LP_AMOUNT,
+  TARGET_PRICE,
   VOUCHER_RATE
 }

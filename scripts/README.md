@@ -2,7 +2,7 @@
 
 ## Preparation
 
-1. Config `MASTERCHEF_START_DATE` (Required for step 1)
+1. Config `VESTING_START_DATE` (Required for step 1)
 2. Config `MASTERCHEF_START_BLOCK` (Required for step 1)
 3. Config `VESTING_ADDRESS` (Required for step 2)
 4. Config `DEV_ADDRESS` (Required for step 3)
@@ -11,12 +11,10 @@
 7. Config `PANCAKE_ROUTER_ADDRESS`, `PANCAKE_FACTORY_ADDRESS`, and `INIT_CODE_PAIR_HASH` (Required for step 3)
 8. Config `TIMELOCK_ADDRESS` (Required for step 3)
 9. Config `MASTERCHEF_ADDRESS` (Required for step 3)
-10. Config `TIMELOCK_ADDRESS` (Required for step 3)
-11. Config `ECOSYSTEM_ADDRESS` (Required for step 4)
-12. Config `MARKETING_ADDRESS` (Required for step 4)
-13. Config `DEV_1_ADDRESS` (Required for step 4)
-14. Config `DEV_2_ADDRESS` (Required for step 4)
-15. Config `BURN_ADDRESS` (Required for step 4)
+10. Config `ECOSYSTEM_ADDRESS` (Required for step 4)
+11. Config `DEV_1_ADDRESS` (Required for step 4)
+12. Config `DEV_2_ADDRESS` (Required for step 4)
+13. Config `BURN_ADDRESS` (Required for step 4)
 
 ## 1. Deploy all contracts
 

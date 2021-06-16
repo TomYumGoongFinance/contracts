@@ -5,11 +5,20 @@
   "scripts": {
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
-    "deploy": "npx hardhat run scripts/deploy.js --network",
+    "deploy-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/deploy.js --network testnet",
+    "deploy-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/deploy.js --network mainnet",
     "goong": "npx hardhat run scripts/goong.js --network",
     "masterchef": "npx hardhat run scripts/masterchef.js --network",
     "vesting": "npx hardhat run scripts/vesting.js --network",
-    "verify": "npx hardhat run scripts/configVerifier.js --network"
+    "verify": "npx hardhat run scripts/configVerifier.js --network",
+    "addlp-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/router.js --network testnet",
+    "addlp-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/router.js --network mainnet",
+    "fakelp-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/fakelp.js --network testnet",
+    "fakelp-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/fakelp.js --network mainnet",
+    "withdraw-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/withdrawLiquidity.js --network testnet",
+    "withdraw-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/withdrawLiquidity.js --network mainnet",
+    "adjust-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/adjustPrice.js --network testnet",
+    "adjust-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/adjustPrice.js --network mainnet"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
@@ -36,6 +45,8 @@
     "@ethersproject/solidity": "^5.2.0",
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
-    "chalk": "^4.1.1"
+    "chalk": "^4.1.1",
+    "dotenv": "^10.0.0",
+    "dotenv-cli": "^4.0.0"
   }
 }
