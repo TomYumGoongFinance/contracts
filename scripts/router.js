@@ -1,5 +1,6 @@
 const hre = require("hardhat")
 const { getLPAddress } = require("./libs/address")
+const { privateKey } = require("../secrets.json")
 const {
   BUSD,
   BNB,
@@ -11,6 +12,7 @@ const { addLiquidity, addLiquidityETH } = require("./libs/liquidity.js")
 const { approve } = require("./libs/token")
 
 async function addEthLP(token, tokenAmount, ethAmount) {
+  const ownerAddress = new ethers.Wallet(privateKey).address
   const Router = await hre.ethers.getContractFactory("PancakeRouter")
   const router = await Router.attach(ROUTER_ADDRESS)
 
@@ -19,7 +21,7 @@ async function addEthLP(token, tokenAmount, ethAmount) {
   const transaction = await addLiquidityETH(router, {
     token,
     tokenAmount,
-    senderAddress: "0xB9d1d56B05b692F44bd60f8427AeF0f8ffDa5C15",
+    senderAddress: ownerAddress,
     ethAmount
   })
 
@@ -35,7 +37,7 @@ async function addLP(tokenA, tokenB, tokenAmountA, tokenAmountB) {
     tokenB,
     tokenAmountA,
     tokenAmountB,
-    senderAddress: "0xB9d1d56B05b692F44bd60f8427AeF0f8ffDa5C15"
+    senderAddress: ownerAddress
   })
 
   console.log("Executed transaction:", transaction.transactionHash)
