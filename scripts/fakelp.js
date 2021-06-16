@@ -54,7 +54,7 @@ async function tripleLiquidity(fakeGoong2, ethValue) {
 
   const transaction = await goongIllusion
     .tripleLiquidity(GOONG, FAKE_GOONG, fakeGoong2, {
-      gasLimit: 10000000,
+      gasLimit: 15000000,
       value: ethValue
     })
     .then((tx) => tx.wait())
