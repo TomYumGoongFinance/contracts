@@ -6,7 +6,8 @@ const {
   BNB,
   GOONG,
   ROUTER_ADDRESS,
-  FAKE_GOONG
+  FAKE_GOONG,
+  ETH_LP_AMOUNT
 } = require("./libs/config")
 const { addLiquidity, addLiquidityETH } = require("./libs/liquidity.js")
 const { approve } = require("./libs/token")
@@ -44,7 +45,7 @@ async function addLP(tokenA, tokenB, tokenAmountA, tokenAmountB) {
 }
 
 addEthLP(
-  FAKE_GOONG,
+  GOONG,
   ethers.utils.parseEther("10000"),
   ethers.utils.parseEther("3")
 )

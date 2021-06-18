@@ -2,7 +2,13 @@ const { ethers } = require("hardhat")
 const { privateKey } = require("../secrets.json")
 const hre = require("hardhat")
 const { getReserves, approveLP } = require("./libs/liquidity")
-const { ROUTER_ADDRESS, GOONG, BNB, FAKE_GOONG, TARGET_PRICE } = require("./libs/config")
+const {
+  ROUTER_ADDRESS,
+  GOONG,
+  BNB,
+  FAKE_GOONG,
+  TARGET_PRICE
+} = require("./libs/config")
 const { swapExactTokensForETH, swapExactETHForTokens } = require("./libs/swap")
 const { approve } = require("./libs/token")
 
@@ -75,8 +81,8 @@ function sqrt(value) {
 
 const _targetPrice = ethers.BigNumber.from(TARGET_PRICE)
 
-adjustPrice(FAKE_GOONG, _targetPrice)
-  .then(() => adjustPrice(GOONG, _targetPrice))
+// adjustPrice(FAKE_GOONG, _targetPrice)
+  adjustPrice(GOONG, _targetPrice)
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)
