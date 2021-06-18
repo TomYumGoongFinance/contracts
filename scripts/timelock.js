@@ -61,7 +61,7 @@ function updateEmissionRate(emissionRate) {
 }
 
 function calculateEta() {
-  return Math.floor((new Date().getTime() + 60000) / 1000)
+  return Math.floor((new Date().getTime() + 86500000) / 1000)
 }
 
 function bytes32Args(types, values) {
