@@ -22,10 +22,10 @@ contract GoongAirdrop is Ownable {
 
     IBEP20 public token;
     mapping(address => AirdropInfo) public airdropInfo;
-    address[] public airdropRecipients = [];
+    address[] public airdropRecipients;
 
     uint256 constant MINIMUM_VESTED_AMOUNT = 1 ether;
-    uint256 public minimumDuration = 0;
+    uint256 constant MINIMUM_DURATION = 3 days;
 
     event Claimed(address indexed recipient, uint256 claimedAmount);
     event AddedTokenAirdrop(address indexed recipient);
@@ -60,7 +60,7 @@ contract GoongAirdrop is Ownable {
             "recipient is already claimed goong"
         );
         require(
-            _duration >= minimumDuration,
+            _duration >= MINIMUM_DURATION,
             "airdrop duration must be greater than minimum duration"
         );
         require(
@@ -86,7 +86,7 @@ contract GoongAirdrop is Ownable {
     }
 
     function batchAddAirdrop(
-        address[] _recipients,
+        address[] memory _recipients,
         uint256 _startDate,
         uint256 _duration,
         uint256 _amount
@@ -110,7 +110,7 @@ contract GoongAirdrop is Ownable {
 
         uint256 _claimableAmount = claimableAmount(msg.sender);
 
-        require(_claimableAmount <= 0, "already claimed all tokens");
+        require(_claimableAmount > 0, "already claimed all tokens");
 
         token.transfer(msg.sender, _claimableAmount);
         info.amount = 0;
@@ -122,7 +122,7 @@ contract GoongAirdrop is Ownable {
         uint256 claimAmount = 0;
         for (uint256 i = 0; i < airdropRecipients.length; i++) {
             address recipient = airdropRecipients[i];
-            AirdropInfo info = airdropInfo[recipient];
+            AirdropInfo memory info = airdropInfo[recipient];
 
             // already expired
             if (info.startDate.add(info.duration) < block.timestamp) {
