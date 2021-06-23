@@ -1,15 +1,42 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./GoongVesting.sol";
+import "./GoongToken.sol";
+
+// ████████╗░█████╗░███╗░░░███╗██╗░░░██╗██╗░░░██╗███╗░░░███╗░██████╗░░█████╗░░█████╗░███╗░░██╗░██████╗░
+// ╚══██╔══╝██╔══██╗████╗░████║╚██╗░██╔╝██║░░░██║████╗░████║██╔════╝░██╔══██╗██╔══██╗████╗░██║██╔════╝░
+// ░░░██║░░░██║░░██║██╔████╔██║░╚████╔╝░██║░░░██║██╔████╔██║██║░░██╗░██║░░██║██║░░██║██╔██╗██║██║░░██╗░
+// ░░░██║░░░██║░░██║██║╚██╔╝██║░░╚██╔╝░░██║░░░██║██║╚██╔╝██║██║░░╚██╗██║░░██║██║░░██║██║╚████║██║░░╚██╗
+// ░░░██║░░░╚█████╔╝██║░╚═╝░██║░░░██║░░░╚██████╔╝██║░╚═╝░██║╚██████╔╝╚█████╔╝╚█████╔╝██║░╚███║╚██████╔╝
+// ░░░╚═╝░░░░╚════╝░╚═╝░░░░░╚═╝░░░╚═╝░░░░╚═════╝░╚═╝░░░░░╚═╝░╚═════╝░░╚════╝░░╚════╝░╚═╝░░╚══╝░╚═════╝░
+//
+// Website: https://tomyumgoong.finance
+// Telegram: https://t.me/tomyumgoong_finance
+//
+//     ____________  \
+//                 \ |
+//                 / /
+//      /=========== * ===
+//     /=============-----
+//    /=============\\
+//   // |||| }}\\\\
+//   |||
+//    \\\
+//     \\\
 
 contract GoongVestingController is Ownable {
-    GoongVesting public goongVesting;
+    using SafeMath for uint256;
 
-    constructor(address _goongVesting) public {
+    GoongVesting public goongVesting;
+    GoongToken public goong;
+
+    constructor(address _goong, address _goongVesting) public {
         goongVesting = GoongVesting(_goongVesting);
+        goong = GoongToken(_goong);
     }
 
     /**
@@ -25,6 +52,9 @@ contract GoongVestingController is Ownable {
         uint256 _duration,
         uint256 _amount
     ) public onlyOwner {
+        goong.transferFrom(msg.sender, address(this), _amount);
+        goong.approve(address(goongVesting), _amount);
+
         goongVesting.addTokenVesting(
             _recipient,
             _startDate,
@@ -46,6 +76,10 @@ contract GoongVestingController is Ownable {
         uint256 _duration,
         uint256 _amount
     ) public onlyOwner {
+        uint256 transferAmount = _amount.mul(_recipients.length);
+        goong.transferFrom(msg.sender, address(this), transferAmount);
+        goong.approve(address(goongVesting), transferAmount);
+
         for (uint256 i = 0; i < _recipients.length; i++) {
             addTokenVesting(_recipients[i], _startDate, _duration, _amount);
         }

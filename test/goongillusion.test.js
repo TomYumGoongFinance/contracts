@@ -15,7 +15,7 @@ const {
 } = require("./libs/router")
 const { approveTokens } = require("./libs/token")
 
-describe("GoongIllusion", function () {
+describe.skip("GoongIllusion", function () {
   let fakeGoong1, fakeGoong2, goong, weth
   let pancakeRouter
   let goongIllusion
