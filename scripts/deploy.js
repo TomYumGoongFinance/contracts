@@ -10,9 +10,11 @@ const {
   MINIMUM_DURATION,
   MASTERCHEF_START_BLOCK,
   getStartBlock,
-  ROUTER_ADDRESS
+  ROUTER_ADDRESS,
+  GOONG
 } = require("./libs/config")
 const { green } = require("chalk")
+const { ethers } = require("ethers")
 
 let goongAddress
 
@@ -57,7 +59,7 @@ async function deployMasterChef(goongToken) {
 }
 
 async function deployVesting() {
-  const GoongVesting = await ethers.getContractFactory("GoongVesting")
+  const GoongVesting = await hre.ethers.getContractFactory("GoongVesting")
   const params = [goongAddress, MINIMUM_DURATION]
   const vesting = await GoongVesting.deploy(...params)
   await vesting.deployed()
@@ -85,7 +87,7 @@ async function deployTimelock() {
 }
 
 async function deployGoongIllusion() {
-  const GoongIllusion = await ethers.getContractFactory("GoongIllusion")
+  const GoongIllusion = await hre.ethers.getContractFactory("GoongIllusion")
   const goongIllusion = await GoongIllusion.deploy(ROUTER_ADDRESS)
 
   await goongIllusion.deployed()
@@ -95,6 +97,20 @@ async function deployGoongIllusion() {
   return {
     contractAddress: goongIllusion.address,
     params: [ROUTER_ADDRESS]
+  }
+}
+
+async function deployAirdropVesting() {
+  const GoongAirdrop = await hre.ethers.getContractFactory("GoongAirdrop")
+  const goongAirdrop = await GoongAirdrop.deploy(GOONG)
+
+  await goongAirdrop.deployed()
+
+  console.log("AirdropVesting deployed to:", goongAirdrop.address)
+
+  return {
+    contractAddress: goongAirdrop.address,
+    params: [GOONG]
   }
 }
 
@@ -119,10 +135,8 @@ async function deployGoongIllusion() {
 //     process.exit(1)
 //   })
 
-// deployGoongToken()
-// .then(verifyContract)
-deployGoongIllusion()
-  // .then(verifyContract)
+deployAirdropVesting()
+  .then(verifyContract)
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error)
