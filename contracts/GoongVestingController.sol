@@ -86,6 +86,36 @@ contract GoongVestingController is Ownable {
     }
 
     /**
+     * @dev batch add token vesting for multiple addresses with the same `startDate`, `duration`, and different `amount`
+     * @param _recipients An array of addresses to vest token.
+     * @param _startDate The unix time in seconds to start distributing token.
+     * @param _duration The number of seconds from _startDate to be fully unlocked.
+     * @param _amounts The total amount of tokens to be locked for each _recipient.
+     */
+    function batchAddTokenVestingMultiAmounts(
+        address[] memory _recipients,
+        uint256 _startDate,
+        uint256 _duration,
+        uint256[] memory _amounts
+    ) public onlyOwner {
+        require(
+            _recipients.length == _amounts.length,
+            "amounts and recipients length must be matched"
+        );
+
+        uint256 transferAmount = 0;
+        for (uint256 i = 0; i < _amounts.length; i++) {
+            transferAmount = transferAmount.add(_amounts[i]);
+        }
+        goong.transferFrom(msg.sender, address(this), transferAmount);
+        goong.approve(address(goongVesting), transferAmount);
+
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            addTokenVesting(_recipients[i], _startDate, _duration, _amounts[i]);
+        }
+    }
+
+    /**
      * @dev Transfer `goongVesting` ownership from this contract address to the owner of this contract.
      */
     function claimOwnership() public onlyOwner {

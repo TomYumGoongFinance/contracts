@@ -87,14 +87,14 @@ describe("GoongVestingController", function () {
         2 * 60 * 60, // 2 hour
         ethers.utils.parseEther("2000")
       )
-      await mine(1800) // 0.5 hour
+      await mine(7200) // 2 hour
       const aliceAmount = await vestingContract.claimableAmount(alice.address)
       const bobAmount = await vestingContract.claimableAmount(bob.address)
       const charlesAmount = await vestingContract.claimableAmount(charles.address)
 
-      expect(aliceAmount).to.be.eq(ethers.utils.parseEther("500"))
-      expect(bobAmount).to.be.eq(ethers.utils.parseEther("500"))
-      expect(charlesAmount).to.be.eq(ethers.utils.parseEther("500"))
+      expect(aliceAmount).to.be.eq(ethers.utils.parseEther("2000"))
+      expect(bobAmount).to.be.eq(ethers.utils.parseEther("2000"))
+      expect(charlesAmount).to.be.eq(ethers.utils.parseEther("2000"))
     })
   })
 })

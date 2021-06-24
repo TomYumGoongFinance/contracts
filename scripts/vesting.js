@@ -22,6 +22,19 @@ async function vest(recipient, startDate, duration, amount) {
   console.log("Executed transaction:", transaction.transactionHash)
 }
 
+async function batchVest(recipients, startDate, duration, amount) {
+  const GoongVestingController = await ethers.getContractFactory(
+    "GoongVestingController"
+  )
+  const controller = await GoongVestingController.attach(VESTING_ADDRESS)
+
+  const transaction = await controller
+    .batchAddTokenVesting(recipients, startDate, duration, amount)
+    .then(({ wait }) => wait())
+
+  console.log("Executed transaction:", transaction.transactionHash)
+}
+
 const dev1Amount = ethers.utils.parseEther("1000000")
 const dev2Amount = ethers.utils.parseEther("1000000")
 const ecosystemAmount = ethers.utils.parseEther("7990000")
