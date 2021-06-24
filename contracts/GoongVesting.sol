@@ -16,7 +16,7 @@ contract GoongVesting is Ownable {
 
     mapping(address => VestingInfo) public vestingInfo;
 
-    uint256 constant MINIMUM_VESTED_AMOUNT = 1000 ether;
+    uint256 constant MINIMUM_VESTED_AMOUNT = 1 ether;
 
     uint256 public minimumDuration;
 
@@ -67,18 +67,17 @@ contract GoongVesting is Ownable {
         );
         require(
             _amount >= MINIMUM_VESTED_AMOUNT,
-            "vested amount must be greater than 1000 goong"
+            "vested amount must be greater than 1 goong"
         );
         require(_startDate >= block.timestamp, "start date cannot be the past");
 
-        VestingInfo memory _vestingInfo =
-            VestingInfo({
-                recipient: _recipient,
-                startDate: _startDate,
-                duration: _duration,
-                initialLockedAmount: _amount,
-                claimedAmount: 0
-            });
+        VestingInfo memory _vestingInfo = VestingInfo({
+            recipient: _recipient,
+            startDate: _startDate,
+            duration: _duration,
+            initialLockedAmount: _amount,
+            claimedAmount: 0
+        });
 
         vestingInfo[_recipient] = _vestingInfo;
 
@@ -146,10 +145,9 @@ contract GoongVesting is Ownable {
         view
         returns (uint256)
     {
-        uint256 _remainingVestingAmount =
-            vestingInfo[recipient].initialLockedAmount.sub(
-                vestingInfo[recipient].claimedAmount
-            );
+        uint256 _remainingVestingAmount = vestingInfo[recipient]
+        .initialLockedAmount
+        .sub(vestingInfo[recipient].claimedAmount);
 
         return _remainingVestingAmount;
     }
@@ -168,12 +166,11 @@ contract GoongVesting is Ownable {
 
         if (block.timestamp < info.startDate) return 0;
 
-        uint256 _claimableAmount =
-            info
-                .initialLockedAmount
-                .mul(block.timestamp.sub(info.startDate))
-                .div(info.duration)
-                .sub(info.claimedAmount);
+        uint256 _claimableAmount = info
+        .initialLockedAmount
+        .mul(block.timestamp.sub(info.startDate))
+        .div(info.duration)
+        .sub(info.claimedAmount);
 
         return _claimableAmount;
     }

@@ -81,7 +81,12 @@ contract GoongVestingController is Ownable {
         goong.approve(address(goongVesting), transferAmount);
 
         for (uint256 i = 0; i < _recipients.length; i++) {
-            addTokenVesting(_recipients[i], _startDate, _duration, _amount);
+            goongVesting.addTokenVesting(
+                _recipients[i],
+                _startDate,
+                _duration,
+                _amount
+            );
         }
     }
 
@@ -111,7 +116,12 @@ contract GoongVestingController is Ownable {
         goong.approve(address(goongVesting), transferAmount);
 
         for (uint256 i = 0; i < _recipients.length; i++) {
-            addTokenVesting(_recipients[i], _startDate, _duration, _amounts[i]);
+            goongVesting.addTokenVesting(
+                _recipients[i],
+                _startDate,
+                _duration,
+                _amounts[i]
+            );
         }
     }
 
