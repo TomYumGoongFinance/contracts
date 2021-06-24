@@ -24,28 +24,12 @@ async function batchVest(recipients, startDate, duration, amounts) {
   console.log("Executed transaction:", transaction.transactionHash)
 }
 
-// const fs = require("fs")
-// function filter() {
-//   const raw = fs.readFileSync("./scripts/compensation.json", "utf8")
-//   const json = JSON.parse(raw)
-//   fs.writeFileSync(
-//     "./scripts/compensation-2.json",
-//     JSON.stringify(
-//       json.map((j) => ({ ...j, recipient: j.recipient.toLowerCase() })),
-//       null,
-//       2
-//     )
-//   )
-// }
-
 // Excluding small amounts
 const filteredCompensation = compensations.filter(
   (c) => parseInt(c.amount) > 1e18
 )
 const recipients = filteredCompensation.map((c) => c.recipient.toLowerCase())
 const amounts = filteredCompensation.map((c) => c.amount)
-
-console.log(recipients.filter((r, i) => recipients.indexOf(r) != i))
 
 // Thu Jun 24 2021 22:00:00 GMT+0700
 const startDate = 1624546800
