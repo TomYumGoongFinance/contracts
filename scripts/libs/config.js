@@ -40,6 +40,7 @@ const ALPHA = "0xa1faa113cbe53436df28ff0aee54275c13b40975"
 const BAND = "0xad6caeb32cd2c308980a548bd0bc5aa4306c6c18"
 const BTCB = "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c"
 const ETH = "0x2170ed0880ac9a755fd29b2688956bd959f933f8"
+const LINK = process.env.LINK
 
 // All evm-compatible chains
 // ===============================
@@ -58,6 +59,9 @@ const VESTING_COMPENSATION_ADDRESS = process.env.VESTING_COMPENSATION_ADDRESS
 const VESTING_CONTROLLER_ADDRESS = process.env.VESTING_CONTROLLER_ADDRESS
 const TIMELOCK_ADDRESS = process.env.TIMELOCK_ADDRESS
 const MASTERCHEF_ADDRESS = process.env.MASTERCHEF_ADDRESS
+const LINK_VRF_COORDINATOR_ADDRESS = process.env.LINK_VRF_COORDINATOR_ADDRESS
+const LINK_KEY_HASH = process.env.LINK_KEY_HASH
+const LINK_FEE = process.env.LINK_FEE
 
 // Masterchef Configs
 const MASTERCHEF_START_BLOCK = 8349752 // BSC Mainnet, Wed Jun 16 2021 14:00:00 PM UTC
@@ -202,6 +206,9 @@ module.exports = {
   MINIMUM_DURATION,
   TIMELOCK_ADDRESS,
   MASTERCHEF_ADDRESS,
+  LINK_VRF_COORDINATOR_ADDRESS,
+  LINK_FEE,
+  LINK_KEY_HASH,
   INIT_CODE_HASH,
   BUSD,
   BNB,
@@ -217,6 +224,7 @@ module.exports = {
   BAND,
   BTCB,
   ETH,
+  LINK,
   MASTERCHEF_START_BLOCK,
   VESTING_START_DATE,
   EGG_PER_BLOCK,
