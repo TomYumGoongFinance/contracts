@@ -106,7 +106,6 @@ contract Goongery is Ownable {
         }
 
         uint256 totalGoongAmount = calculateGoongCost(_numberOfTickets);
-        uint256 totalBusdAmount = calculateBusdCost(_numberOfTickets);
 
         uint256 tokenId = nft.create(
             msg.sender,
@@ -134,14 +133,6 @@ contract Goongery is Ownable {
         returns (uint256)
     {
         return numberOfTickets.mul(goongeryInfo[roundNumber].goongPerTicket);
-    }
-
-    function calculateBusdCost(uint256 numberOfTickets)
-        public
-        view
-        returns (uint256)
-    {
-        return numberOfTickets.mul(goongeryInfo[roundNumber].busdPerTicket);
     }
 
     function createNewRound(
