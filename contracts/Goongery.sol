@@ -16,49 +16,73 @@ contract Goongery is Ownable {
     using SafeMath for uint8;
     using SafeERC20 for IERC20;
 
+    // Represents the status of the goongery
+    enum Status {
+        NotStarted, // The goongery has not started yet
+        Open, // The goongery is open for ticket purchases
+        Closed, // The goongery is no longer open for ticket purchases
+        Completed // The goongery has been closed and the numbers drawn
+    }
+
+    struct GoongeryInfo {
+        Status status;
+        uint8[3] allocation;
+        uint256 goongPerTicket;
+        uint256 busdPerTicket;
+        uint256 openingTimestamp;
+        uint256 closingTimestamp;
+        uint256[] tokenIds;
+        uint8[3] winningNumbers;
+    }
+
+    // Maximum burn percentage to be adjusted
+    uint8 public constant MAX_BURN_PERCENTAGE = 20;
+    // Maximum team fee percentage to be adjusted
+    uint8 public constant MAX_TEAM_FEE_PERCENTAGE = 50;
+    // Minimum seconds allowed to buy ticket per round
+    uint256 public constant MIN_BUY_TICKET_TIME = 1 hours;
+    // Minimum goong per ticket
+    uint256 public constant MIN_GOONG_PER_TICKET = 1 ether;
+    // Minimum busd per ticket
+    uint256 public constant MIN_BUSD_PER_TICKET = 1 ether;
     // Goong address
     IERC20 public goong;
+    // BUSD address
+    IERC20 public busd;
     // NFT represent googery ticket.
     GoongeryNFT public nft;
-    // Allocation for each prize in the pool
-    uint8[3] public allocation;
-    // Minimum goong per ticket
-    uint256 public minPrice;
+    // Percentage of total goong to be burned (0 - 100)
+    uint8 public burnPercentage;
+    // Percentage of total busd allocated to system maintenance cost, dev cost, etc.
+    uint8 public teamFeePercentage;
     // Maximum number for each digit
     uint8 public maxNumber;
     // Round number
     uint256 public roundNumber = 0;
-    // roundNumber => [tokenId]
-    mapping(uint256 => uint256[]) public goongeryInfo;
+    // roundNumber => GoongeryInfo
+    mapping(uint256 => GoongeryInfo) public goongeryInfo;
     // address => [tokenId]
     mapping(address => uint256[]) public userInfo;
     // issueId => buyOption => googeryNumbersId => buyAmountSum
     mapping(uint256 => mapping(GoongeryOption.Buy => mapping(uint64 => uint256)))
         public userBuyAmountSum;
+
     uint256 public totalAmount = 0;
     uint256 public totalAddresses = 0;
     uint256 public lastTimestamp;
-
-    enum BuyOption {
-        ExactThreeDigits,
-        PermutableThreeDigits,
-        LastTwoDigits
-    }
 
     event Buy(address indexed user, uint256 tokenId);
 
     constructor(
         address _goong,
+        address _busd,
         address _nft,
-        uint256 _minPrice,
-        uint8 _maxNumber,
-        uint8[3] memory _allocation
+        uint8 _maxNumber
     ) public {
         goong = IERC20(_goong);
+        busd = IERC20(_busd);
         nft = GoongeryNFT(_nft);
-        allocation = _allocation;
         maxNumber = _maxNumber;
-        minPrice = _minPrice;
     }
 
     /**
@@ -69,33 +93,127 @@ contract Goongery is Ownable {
      * If buyOption is `LastTwoNumbers`, Only _numbers[0] and _numbers[1] will be used (ignore _numbers[2]).
      */
     function buy(
-        uint256 _price,
+        uint256 _numberOfTickets,
         uint8[3] memory _numbers,
         GoongeryOption.Buy _buyOption
     ) public {
-        require(_price >= minPrice, "price must above minPrice");
+        require(
+            block.timestamp >= goongeryInfo[roundNumber].openingTimestamp,
+            "block timestamp < openingTimestamp"
+        );
+        require(
+            block.timestamp < goongeryInfo[roundNumber].closingTimestamp,
+            "block timestamp >= closingTimestamp"
+        );
+
         for (uint8 i = 0; i < 3; i++) {
             require(_numbers[i] <= maxNumber, "exceed max number allowed");
         }
 
+        if (goongeryInfo[roundNumber].status == Status.NotStarted) {
+            goongeryInfo[roundNumber].status = Status.Open;
+        }
+
+        uint256 totalGoongAmount = calculateGoongCost(_numberOfTickets);
+        uint256 totalBusdAmount = calculateBusdCost(_numberOfTickets);
+
         uint256 tokenId = nft.create(
             msg.sender,
             _numbers,
-            _price,
+            totalGoongAmount,
             roundNumber,
             _buyOption
         );
 
-        goongeryInfo[roundNumber].push(tokenId);
+        goongeryInfo[roundNumber].tokenIds.push(tokenId);
         userInfo[msg.sender].push(tokenId);
-        totalAmount = totalAmount.add(_price);
+        totalAmount = totalAmount.add(totalGoongAmount);
         lastTimestamp = block.timestamp;
 
-        addUserBuyAmountSum(_numbers, _price, _buyOption);
-        goong.safeTransferFrom(msg.sender, address(this), _price);
+        addUserBuyAmountSum(_numbers, totalGoongAmount, _buyOption);
+
+        goong.safeTransferFrom(msg.sender, address(this), totalGoongAmount);
+        busd.safeTransferFrom(msg.sender, address(this), totalBusdAmount);
 
         emit Buy(msg.sender, tokenId);
     }
+
+    function calculateGoongCost(uint256 numberOfTickets)
+        public
+        view
+        returns (uint256)
+    {
+        return numberOfTickets.mul(goongeryInfo[roundNumber].goongPerTicket);
+    }
+
+    function calculateBusdCost(uint256 numberOfTickets)
+        public
+        view
+        returns (uint256)
+    {
+        return numberOfTickets.mul(goongeryInfo[roundNumber].busdPerTicket);
+    }
+
+    function createNewRound(
+        uint8[3] calldata _allocation,
+        uint256 _goongPerTicket,
+        uint256 _busdPerTicket,
+        uint256 _openingTimestamp,
+        uint256 _closingTimestamp
+    ) external onlyOwner {
+        require(
+            _goongPerTicket > MIN_GOONG_PER_TICKET,
+            "goongPerTicket must be greater than MIN_GOONG_PER_TICKET"
+        );
+        require(
+            _busdPerTicket > MIN_BUSD_PER_TICKET,
+            "goongPerTicket must be greater than MIN_BUSD_PER_TICKET"
+        );
+        require(
+            _openingTimestamp > block.timestamp,
+            "openingTimstamp cannot be the past"
+        );
+        require(
+            _closingTimestamp > _openingTimestamp + MIN_BUY_TICKET_TIME,
+            "closingTimestamp must be greater than openingTimestamp + MIN_BUY_TICKET_TIME"
+        );
+
+        uint256 totalAllocation = 0;
+        for (uint8 i = 0; i < _allocation.length; i++) {
+            totalAllocation = totalAllocation.add(_allocation[i]);
+        }
+
+        require(
+            totalAllocation == 100 - burnPercentage,
+            "total allocation must be equal to 100 - burnPercentage"
+        );
+
+        Status lotteryStatus;
+        if (_openingTimestamp >= block.timestamp) {
+            lotteryStatus = Status.Open;
+        } else {
+            lotteryStatus = Status.NotStarted;
+        }
+        uint256[] memory emptyTokenIds;
+        uint8[3] memory emptyWinningNumbers;
+        GoongeryInfo memory info = GoongeryInfo({
+            status: lotteryStatus,
+            allocation: _allocation,
+            goongPerTicket: _goongPerTicket,
+            busdPerTicket: _busdPerTicket,
+            openingTimestamp: _openingTimestamp,
+            closingTimestamp: _closingTimestamp,
+            tokenIds: emptyTokenIds,
+            winningNumbers: emptyWinningNumbers
+        });
+
+        roundNumber = roundNumber.add(1);
+        goongeryInfo[roundNumber] = info;
+    }
+
+    function drawWinningNumbers() external onlyOwner {}
+
+    function drawWinningNumbersCallback() external {}
 
     function addUserBuyAmountSum(
         uint8[3] memory _numbers,
@@ -166,5 +284,18 @@ contract Goongery is Ownable {
         _numbers[index2] = temp;
 
         return _numbers;
+    }
+
+    function setTeamFeePercentage(uint8 percentage) external onlyOwner {
+        require(percentage <= MAX_TEAM_FEE_PERCENTAGE, "Exceed max team fee");
+        teamFeePercentage = percentage;
+    }
+
+    function setBurnPercentage(uint8 percentage) external onlyOwner {
+        require(
+            percentage <= MAX_BURN_PERCENTAGE,
+            "Exceed max burn percentage"
+        );
+        burnPercentage = percentage;
     }
 }
