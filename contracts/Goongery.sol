@@ -28,7 +28,6 @@ contract Goongery is Ownable {
         Status status;
         uint8[3] allocation;
         uint256 goongPerTicket;
-        uint256 busdPerTicket;
         uint256 openingTimestamp;
         uint256 closingTimestamp;
         uint256[] tokenIds;
@@ -43,18 +42,12 @@ contract Goongery is Ownable {
     uint256 public constant MIN_BUY_TICKET_TIME = 1 hours;
     // Minimum goong per ticket
     uint256 public constant MIN_GOONG_PER_TICKET = 1 ether;
-    // Minimum busd per ticket
-    uint256 public constant MIN_BUSD_PER_TICKET = 1 ether;
     // Goong address
     IERC20 public goong;
-    // BUSD address
-    IERC20 public busd;
     // NFT represent googery ticket.
     GoongeryNFT public nft;
     // Percentage of total goong to be burned (0 - 100)
     uint8 public burnPercentage;
-    // Percentage of total busd allocated to system maintenance cost, dev cost, etc.
-    uint8 public teamFeePercentage;
     // Maximum number for each digit
     uint8 public maxNumber;
     // Round number
@@ -75,12 +68,10 @@ contract Goongery is Ownable {
 
     constructor(
         address _goong,
-        address _busd,
         address _nft,
         uint8 _maxNumber
     ) public {
         goong = IERC20(_goong);
-        busd = IERC20(_busd);
         nft = GoongeryNFT(_nft);
         maxNumber = _maxNumber;
     }
@@ -133,7 +124,6 @@ contract Goongery is Ownable {
         addUserBuyAmountSum(_numbers, totalGoongAmount, _buyOption);
 
         goong.safeTransferFrom(msg.sender, address(this), totalGoongAmount);
-        busd.safeTransferFrom(msg.sender, address(this), totalBusdAmount);
 
         emit Buy(msg.sender, tokenId);
     }
@@ -157,17 +147,12 @@ contract Goongery is Ownable {
     function createNewRound(
         uint8[3] calldata _allocation,
         uint256 _goongPerTicket,
-        uint256 _busdPerTicket,
         uint256 _openingTimestamp,
         uint256 _closingTimestamp
     ) external onlyOwner {
         require(
             _goongPerTicket > MIN_GOONG_PER_TICKET,
             "goongPerTicket must be greater than MIN_GOONG_PER_TICKET"
-        );
-        require(
-            _busdPerTicket > MIN_BUSD_PER_TICKET,
-            "goongPerTicket must be greater than MIN_BUSD_PER_TICKET"
         );
         require(
             _openingTimestamp > block.timestamp,
@@ -200,7 +185,6 @@ contract Goongery is Ownable {
             status: lotteryStatus,
             allocation: _allocation,
             goongPerTicket: _goongPerTicket,
-            busdPerTicket: _busdPerTicket,
             openingTimestamp: _openingTimestamp,
             closingTimestamp: _closingTimestamp,
             tokenIds: emptyTokenIds,
@@ -284,11 +268,6 @@ contract Goongery is Ownable {
         _numbers[index2] = temp;
 
         return _numbers;
-    }
-
-    function setTeamFeePercentage(uint8 percentage) external onlyOwner {
-        require(percentage <= MAX_TEAM_FEE_PERCENTAGE, "Exceed max team fee");
-        teamFeePercentage = percentage;
     }
 
     function setBurnPercentage(uint8 percentage) external onlyOwner {
