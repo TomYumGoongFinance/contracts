@@ -12,9 +12,9 @@ contract GoongeryNFT is ERC721, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private tokenIds;
 
-    mapping(uint256 => uint8[3]) public lotteryInfo;
-    mapping(uint256 => uint256) public lotteryAmount;
-    mapping(uint256 => uint256) public issueIndex;
+    mapping(uint256 => uint8[3]) public googeryInfo;
+    mapping(uint256 => uint256) public goongeryAmount;
+    mapping(uint256 => uint256) public roundNumber;
     mapping(uint256 => bool) public claimInfo;
     mapping(uint256 => GoongeryOption.Buy) public buyOption;
 
@@ -24,47 +24,43 @@ contract GoongeryNFT is ERC721, Ownable {
         address player,
         uint8[3] memory _lotteryNumbers,
         uint256 _amount,
-        uint256 _issueIndex,
+        uint256 _roundNumber,
         GoongeryOption.Buy _buyOption
     ) public onlyOwner returns (uint256) {
         tokenIds.increment();
 
         uint256 itemId = tokenIds.current();
         _mint(player, itemId);
-        lotteryAmount[itemId] = _amount;
-        issueIndex[itemId] = _issueIndex;
+        goongeryAmount[itemId] = _amount;
+        roundNumber[itemId] = _roundNumber;
         buyOption[itemId] = _buyOption;
 
         if (_buyOption == GoongeryOption.Buy.ExactThreeDigits) {
-            lotteryInfo[itemId] = _lotteryNumbers;
+            googeryInfo[itemId] = _lotteryNumbers;
         } else if (_buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
-            lotteryInfo[itemId] = _lotteryNumbers;
+            googeryInfo[itemId] = _lotteryNumbers;
         } else if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
-            lotteryInfo[itemId] = _lotteryNumbers;
-            lotteryInfo[itemId][2] = ~uint8(0);
+            googeryInfo[itemId] = _lotteryNumbers;
+            googeryInfo[itemId][2] = ~uint8(0);
         }
 
         return itemId;
     }
 
-    function getLotteryNumbers(uint256 tokenId)
+    function getNumbers(uint256 tokenId)
         external
         view
         returns (uint8[3] memory)
     {
-        return lotteryInfo[tokenId];
+        return googeryInfo[tokenId];
     }
 
-    function getLotteryAmount(uint256 tokenId) external view returns (uint256) {
-        return lotteryAmount[tokenId];
+    function getAmount(uint256 tokenId) external view returns (uint256) {
+        return goongeryAmount[tokenId];
     }
 
-    function getLotteryIssueIndex(uint256 tokenId)
-        external
-        view
-        returns (uint256)
-    {
-        return issueIndex[tokenId];
+    function getRoundNumber(uint256 tokenId) external view returns (uint256) {
+        return roundNumber[tokenId];
     }
 
     function getBuyOption(uint256 tokenId)

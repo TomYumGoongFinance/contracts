@@ -6,6 +6,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "hardhat/console.sol";
 import "./GoongeryNFT.sol";
 import "./libs/GoongeryOption.sol";
@@ -16,6 +17,7 @@ contract Goongery is Ownable {
     using SafeMath for uint256;
     using SafeMath for uint8;
     using SafeERC20 for IERC20;
+    using Address for address;
 
     // Represents the status of the goongery
     enum Status {
@@ -76,6 +78,12 @@ contract Goongery is Ownable {
             msg.sender == address(goongeryRandomGenerator),
             "Caller must be GoongeryRandomGenerator"
         );
+        _;
+    }
+
+    modifier notContract() {
+        require(!address(msg.sender).isContract(), "contract not allowed");
+        require(msg.sender == tx.origin, "proxy contract not allowed");
         _;
     }
 
@@ -233,6 +241,59 @@ contract Goongery is Ownable {
         }
     }
 
+    function claimReward(uint256 _roundNumber, uint256 _nftId)
+        external
+        notContract
+    {
+        require(
+            goongeryInfo[roundNumber].closingTimestamp <= block.timestamp,
+            "Wait for winning numbers drawn"
+        );
+        require(
+            goongeryInfo[roundNumber].status == Status.Completed,
+            "Winning numbers are not chosen yet"
+        );
+        require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
+        require(!nft.getClaimStatus(_nftId), "Nft is already claimed");
+    }
+
+    function getNumbersForRewardCalculation(uint256 _nftId)
+        public
+        view
+        returns (uint8[3] memory)
+    {
+        uint8[3] memory buyNumbers = nft.getNumbers(_nftId);
+        GoongeryOption.Buy buyOption = nft.getBuyOption(_nftId);
+        if (buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
+            return getLeastPermutableNumber(buyNumbers);
+        } else if (buyOption == GoongeryOption.Buy.LastTwoDigits) {
+            buyNumbers[2] = ~uint8(0);
+        }
+
+        return buyNumbers;
+    }
+
+    function calculateReward(
+        uint8[3] calldata _numbers,
+        uint256 _roundNumber,
+        GoongeryOption.Buy _buyOption
+    ) public view returns (uint256) {
+        if (goongeryInfo[_roundNumber].status != Status.Completed) {
+            return 0;
+        }
+
+        uint64 numberId = calculateGoongeryNumberId(_numbers);
+        uint256 totalGoong = goong.balanceOf(address(this));
+        uint256 totalGoongForNumbers = userBuyAmountSum[_roundNumber][
+            _buyOption
+        ][numberId];
+        uint8 goongAllocation = goongeryInfo[_roundNumber].allocation[
+            uint256(_buyOption)
+        ];
+
+        return total
+    }
+
     function _extract(uint256 _randomNumber)
         private
         view
@@ -253,19 +314,15 @@ contract Goongery is Ownable {
         GoongeryOption.Buy _buyOption
     ) internal {
         // Create a copy of _numbers;
-        uint8[3] memory numbersForNumberId = [
-            _numbers[0],
-            _numbers[1],
-            _numbers[2]
-        ];
+        uint8[3] memory numbersForId = [_numbers[0], _numbers[1], _numbers[2]];
 
         if (_buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
-            numbersForNumberId = getLeastPermutableNumber(numbersForNumberId);
+            numbersForId = getLeastPermutableNumber(numbersForId);
         } else if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
-            numbersForNumberId[2] = ~uint8(0);
+            numbersForId[2] = ~uint8(0);
         }
 
-        uint64 numberId = calculateGoongeryNumberId(numbersForNumberId);
+        uint64 numberId = calculateGoongeryNumberId(numbersForId);
         userBuyAmountSum[roundNumber][_buyOption][numberId] = userBuyAmountSum[
             roundNumber
         ][_buyOption][numberId]
