@@ -132,10 +132,98 @@ describe("Goongery", async function () {
       )
       const tokenId = await goongery.userInfo(owner.address, 0)
       expect(tokenId).to.be.eq(1)
+      const amount = await nft.getAmount(tokenId)
+      expect(amount).to.be.eq(goongPerTicket.mul(numberOfTickets))
     })
   })
 
-  describe("drawWinningNumbers", async function () {})
+  describe("drawWinningNumbers", async function () {
+    const goongPerTicket = ethers.utils.parseEther("100")
+    it("should change status to `Closed` given valid params", async function () {
+      const timestamp = await currentBlockTimestamp()
+      const _allocation = [60, 20, 10]
+      const _openingTimestamp = timestamp + 200
+      const _closingTimestamp = timestamp + 4000
+      await goongery.createNewRound(
+        _allocation,
+        goongPerTicket,
+        _openingTimestamp,
+        _closingTimestamp
+      )
+
+      const numberOfTickets = 2
+      const numbers = [1, 2, 3]
+      const buyOption = 0
+
+      await mine(300)
+      await approveTokens([goong], goongery.address)
+
+      await goongery
+        .buy(numberOfTickets, numbers, buyOption)
+        .then((tx) => tx.wait())
+
+      await mine(4000)
+
+      await goongery.drawWinningNumbers().then((tx) => tx.wait())
+      const info = await goongery.goongeryInfo(1)
+      expect(info.status).to.be.eq(2)
+    })
+  })
+
+  describe("drawWinningNumbersCallback", async function () {
+    const goongPerTicket = ethers.utils.parseEther("100")
+
+    it("should set winner numbers correctly given valid params", async function () {
+      const [owner] = await ethers.getSigners()
+
+      const timestamp = await currentBlockTimestamp()
+      const _allocation = [60, 20, 10]
+      const _openingTimestamp = timestamp + 200
+      const _closingTimestamp = timestamp + 4000
+      await goongery.createNewRound(
+        _allocation,
+        goongPerTicket,
+        _openingTimestamp,
+        _closingTimestamp
+      )
+
+      const numberOfTickets = 2
+      const numbers = [1, 2, 3]
+      const buyOption = 0
+
+      await mine(300)
+      await approveTokens([goong], goongery.address)
+
+      await goongery
+        .buy(numberOfTickets, numbers, buyOption)
+        .then((tx) => tx.wait())
+
+      await mine(4000)
+
+      await goongery.drawWinningNumbers().then((tx) => tx.wait())
+
+      await goongery.setGoongeryRandomGenerator(owner.address)
+      const requestId = await goongery.requestId()
+      const randomness = ethers.BigNumber.from(ethers.utils.randomBytes(32))
+      await goongery
+        .drawWinningNumbersCallback(1, requestId, randomness)
+        .then((tx) => tx.wait())
+
+      const winningNumbers = await goongery.getWinningNumbers(1)
+      let _winningNumbers = new Array(3)
+      for (let i = 0; i < 3; i++) {
+        const hash = ethers.utils.solidityKeccak256(
+          ["uint256", "uint256"],
+          [randomness, i]
+        )
+        const hashNumber = ethers.BigNumber.from(hash)
+        _winningNumbers[i] = hashNumber.mod(10).toNumber()
+      }
+      expect(winningNumbers).to.be.eql(_winningNumbers)
+      const info = await goongery.goongeryInfo(1)
+      expect(info.status).to.be.eq(3)
+    })
+  })
 
   describe("claimReward", async function () {})
 })

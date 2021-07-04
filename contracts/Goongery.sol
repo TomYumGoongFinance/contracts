@@ -330,6 +330,14 @@ contract Goongery is Ownable, Initializable {
         burnPercentage = percentage;
     }
 
+    // Remove when done test
+    function setGoongeryRandomGenerator(address _randomGenerator)
+        external
+        onlyOwner
+    {
+        goongeryRandomGenerator = IGoongeryRandomGenerator(_randomGenerator);
+    }
+
     function calculateReward(
         uint256 _nftId,
         uint256 _roundNumber,
