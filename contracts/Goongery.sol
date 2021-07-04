@@ -10,6 +10,7 @@ import "hardhat/console.sol";
 import "./GoongeryNFT.sol";
 import "./libs/GoongeryOption.sol";
 import "./libs/BEP20.sol";
+import "./libs/IGoongeryRandomGenerator.sol";
 
 contract Goongery is Ownable {
     using SafeMath for uint256;
@@ -52,6 +53,8 @@ contract Goongery is Ownable {
     uint8 public maxNumber;
     // Round number
     uint256 public roundNumber = 0;
+    // Random generator
+    IGoongeryRandomGenerator public goongeryRandomGenerator;
     // roundNumber => GoongeryInfo
     mapping(uint256 => GoongeryInfo) public goongeryInfo;
     // address => [tokenId]
@@ -63,15 +66,29 @@ contract Goongery is Ownable {
     uint256 public totalAmount = 0;
     uint256 public totalAddresses = 0;
     uint256 public lastTimestamp;
+    // Random generator for request id
+    bytes32 public requestId;
 
     event Buy(address indexed user, uint256 tokenId);
 
+    modifier onlyRandomGenerator() {
+        require(
+            msg.sender == address(goongeryRandomGenerator),
+            "Caller must be GoongeryRandomGenerator"
+        );
+        _;
+    }
+
     constructor(
         address _goong,
+        address _goongRandomGenerator,
         address _nft,
         uint8 _maxNumber
     ) public {
         goong = IERC20(_goong);
+        goongeryRandomGenerator = IGoongeryRandomGenerator(
+            _goongRandomGenerator
+        );
         nft = GoongeryNFT(_nft);
         maxNumber = _maxNumber;
     }
@@ -186,9 +203,49 @@ contract Goongery is Ownable {
         goongeryInfo[roundNumber] = info;
     }
 
-    function drawWinningNumbers() external onlyOwner {}
+    function drawWinningNumbers() external onlyOwner {
+        require(
+            goongeryInfo[roundNumber].closingTimestamp <= block.timestamp,
+            "Cannot draw before close"
+        );
+        require(
+            goongeryInfo[roundNumber].status == Status.Open,
+            "Invalid status"
+        );
 
-    function drawWinningNumbersCallback() external {}
+        goongeryInfo[roundNumber].status = Status.Closed;
+
+        requestId = goongeryRandomGenerator.getRandomNumber(roundNumber);
+    }
+
+    function drawWinningNumbersCallback(
+        uint256 _roundNumber,
+        bytes32 _requestId,
+        uint256 _randomNumber
+    ) external onlyRandomGenerator {
+        require(
+            goongeryInfo[roundNumber].status == Status.Closed,
+            "Draw winning numbers first"
+        );
+        if (_requestId == requestId) {
+            goongeryInfo[_roundNumber].status = Status.Completed;
+            goongeryInfo[_roundNumber].winningNumbers = _extract(_randomNumber);
+        }
+    }
+
+    function _extract(uint256 _randomNumber)
+        private
+        view
+        returns (uint8[3] memory)
+    {
+        uint8[3] memory _winningNumbers;
+        for (uint256 i = 0; i < 3; i++) {
+            bytes32 randomHash = keccak256(abi.encodePacked(_randomNumber, i));
+            uint256 number = uint256(randomHash);
+            _winningNumbers[i] = uint8(number % maxNumber);
+        }
+        return _winningNumbers;
+    }
 
     function addUserBuyAmountSum(
         uint8[3] memory _numbers,
@@ -259,6 +316,11 @@ contract Goongery is Ownable {
         _numbers[index2] = temp;
 
         return _numbers;
+    }
+
+    function setMaxNumber(uint8 _maxNumber) external onlyOwner {
+        require(_maxNumber >= 9, "maxNumber must be greater than 9");
+        maxNumber = _maxNumber;
     }
 
     function setBurnPercentage(uint8 percentage) external onlyOwner {
