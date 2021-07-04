@@ -35,6 +35,7 @@ contract Goongery is Ownable {
         uint256 closingTimestamp;
         uint256[] tokenIds;
         uint8[3] winningNumbers;
+        uint256 totalGoongPrize;
     }
 
     // Maximum burn percentage to be adjusted
@@ -65,7 +66,6 @@ contract Goongery is Ownable {
     mapping(uint256 => mapping(GoongeryOption.Buy => mapping(uint64 => uint256)))
         public userBuyAmountSum;
 
-    uint256 public totalAmount = 0;
     uint256 public totalAddresses = 0;
     uint256 public lastTimestamp;
     // Random generator for request id
@@ -141,8 +141,11 @@ contract Goongery is Ownable {
         );
 
         goongeryInfo[roundNumber].tokenIds.push(tokenId);
+        goongeryInfo[roundNumber].totalGoongPrize = goongeryInfo[roundNumber]
+        .totalGoongPrize
+        .add(totalGoongAmount);
+
         userInfo[msg.sender].push(tokenId);
-        totalAmount = totalAmount.add(totalGoongAmount);
         lastTimestamp = block.timestamp;
 
         addUserBuyAmountSum(_numbers, totalGoongAmount, _buyOption);
@@ -204,7 +207,8 @@ contract Goongery is Ownable {
             openingTimestamp: _openingTimestamp,
             closingTimestamp: _closingTimestamp,
             tokenIds: emptyTokenIds,
-            winningNumbers: emptyWinningNumbers
+            winningNumbers: emptyWinningNumbers,
+            totalGoongPrize: 0
         });
 
         roundNumber = roundNumber.add(1);
@@ -243,7 +247,6 @@ contract Goongery is Ownable {
 
     function claimReward(uint256 _roundNumber, uint256 _nftId)
         external
-        view
         notContract
     {
         require(
@@ -256,6 +259,12 @@ contract Goongery is Ownable {
         );
         require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
         require(!nft.getClaimStatus(_nftId), "Nft is already claimed");
+
+        nft.claimReward(_nftId);
+
+        GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
+        uint256 reward = calculateReward(_nftId, _roundNumber, _buyOption);
+        goong.safeTransfer(msg.sender, reward);
     }
 
     function calculateReward(
@@ -270,7 +279,7 @@ contract Goongery is Ownable {
 
         uint64 numberId = calculateGoongeryNumberId(_numbers);
         uint256 userGoong = nft.getAmount(_nftId);
-        uint256 totalGoong = goong.balanceOf(address(this));
+        uint256 totalGoong = goongeryInfo[_roundNumber].totalGoongPrize;
         uint256 totalGoongForNumbers = userBuyAmountSum[_roundNumber][
             _buyOption
         ][numberId];
