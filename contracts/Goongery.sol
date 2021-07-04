@@ -243,22 +243,51 @@ contract Goongery is Ownable {
 
     function claimReward(uint256 _roundNumber, uint256 _nftId)
         external
+        view
         notContract
     {
         require(
-            goongeryInfo[roundNumber].closingTimestamp <= block.timestamp,
+            goongeryInfo[_roundNumber].closingTimestamp <= block.timestamp,
             "Wait for winning numbers drawn"
         );
         require(
-            goongeryInfo[roundNumber].status == Status.Completed,
+            goongeryInfo[_roundNumber].status == Status.Completed,
             "Winning numbers are not chosen yet"
         );
         require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
         require(!nft.getClaimStatus(_nftId), "Nft is already claimed");
     }
 
+    function calculateReward(
+        uint256 _nftId,
+        uint256 _roundNumber,
+        GoongeryOption.Buy _buyOption
+    ) public view returns (uint256) {
+        uint8[3] memory _numbers = getNumbersForRewardCalculation(_nftId);
+        if (goongeryInfo[_roundNumber].status != Status.Completed) {
+            return 0;
+        }
+
+        uint64 numberId = calculateGoongeryNumberId(_numbers);
+        uint256 userGoong = nft.getAmount(_nftId);
+        uint256 totalGoong = goong.balanceOf(address(this));
+        uint256 totalGoongForNumbers = userBuyAmountSum[_roundNumber][
+            _buyOption
+        ][numberId];
+        uint8 goongAllocation = goongeryInfo[_roundNumber].allocation[
+            uint256(_buyOption)
+        ];
+
+        return
+            totalGoong
+                .mul(goongAllocation)
+                .mul(userGoong)
+                .div(totalGoongForNumbers)
+                .div(100);
+    }
+
     function getNumbersForRewardCalculation(uint256 _nftId)
-        public
+        private
         view
         returns (uint8[3] memory)
     {
@@ -271,27 +300,6 @@ contract Goongery is Ownable {
         }
 
         return buyNumbers;
-    }
-
-    function calculateReward(
-        uint8[3] calldata _numbers,
-        uint256 _roundNumber,
-        GoongeryOption.Buy _buyOption
-    ) public view returns (uint256) {
-        if (goongeryInfo[_roundNumber].status != Status.Completed) {
-            return 0;
-        }
-
-        uint64 numberId = calculateGoongeryNumberId(_numbers);
-        uint256 totalGoong = goong.balanceOf(address(this));
-        uint256 totalGoongForNumbers = userBuyAmountSum[_roundNumber][
-            _buyOption
-        ][numberId];
-        uint8 goongAllocation = goongeryInfo[_roundNumber].allocation[
-            uint256(_buyOption)
-        ];
-
-        return total
     }
 
     function _extract(uint256 _randomNumber)
