@@ -66,12 +66,8 @@ contract Goongery is Ownable {
     mapping(uint256 => mapping(GoongeryOption.Buy => mapping(uint64 => uint256)))
         public userBuyAmountSum;
 
-    uint256 public totalAddresses = 0;
-    uint256 public lastTimestamp;
     // Random generator for request id
     bytes32 public requestId;
-
-    event Buy(address indexed user, uint256 tokenId);
 
     modifier onlyRandomGenerator() {
         require(
@@ -86,6 +82,8 @@ contract Goongery is Ownable {
         require(msg.sender == tx.origin, "proxy contract not allowed");
         _;
     }
+
+    event Buy(address indexed user, uint256 tokenId);
 
     constructor(
         address _goong,
@@ -146,7 +144,6 @@ contract Goongery is Ownable {
         .add(totalGoongAmount);
 
         userInfo[msg.sender].push(tokenId);
-        lastTimestamp = block.timestamp;
 
         addUserBuyAmountSum(_numbers, totalGoongAmount, _buyOption);
 
@@ -267,6 +264,66 @@ contract Goongery is Ownable {
         goong.safeTransfer(msg.sender, reward);
     }
 
+    function _extract(uint256 _randomNumber)
+        private
+        view
+        returns (uint8[3] memory)
+    {
+        uint8[3] memory _winningNumbers;
+        for (uint256 i = 0; i < 3; i++) {
+            bytes32 randomHash = keccak256(abi.encodePacked(_randomNumber, i));
+            uint256 number = uint256(randomHash);
+            _winningNumbers[i] = uint8(number % maxNumber);
+        }
+        return _winningNumbers;
+    }
+
+    function addUserBuyAmountSum(
+        uint8[3] memory _numbers,
+        uint256 _price,
+        GoongeryOption.Buy _buyOption
+    ) internal {
+        // Create a copy of _numbers;
+        uint8[3] memory numbersForId = [_numbers[0], _numbers[1], _numbers[2]];
+
+        if (_buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
+            numbersForId = getLeastPermutableNumber(numbersForId);
+        } else if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
+            numbersForId[2] = ~uint8(0);
+        }
+
+        uint64 numberId = calculateGoongeryNumberId(numbersForId);
+        userBuyAmountSum[roundNumber][_buyOption][numberId] = userBuyAmountSum[
+            roundNumber
+        ][_buyOption][numberId]
+        .add(_price);
+    }
+
+    function swap(
+        uint8[3] memory _numbers,
+        uint8 index1,
+        uint8 index2
+    ) private pure returns (uint8[3] memory) {
+        uint8 temp = _numbers[index1];
+        _numbers[index1] = _numbers[index2];
+        _numbers[index2] = temp;
+
+        return _numbers;
+    }
+
+    function setMaxNumber(uint8 _maxNumber) external onlyOwner {
+        require(_maxNumber >= 9, "maxNumber must be greater than 9");
+        maxNumber = _maxNumber;
+    }
+
+    function setBurnPercentage(uint8 percentage) external onlyOwner {
+        require(
+            percentage <= MAX_BURN_PERCENTAGE,
+            "Exceed max burn percentage"
+        );
+        burnPercentage = percentage;
+    }
+
     function calculateReward(
         uint256 _nftId,
         uint256 _roundNumber,
@@ -311,41 +368,6 @@ contract Goongery is Ownable {
         return buyNumbers;
     }
 
-    function _extract(uint256 _randomNumber)
-        private
-        view
-        returns (uint8[3] memory)
-    {
-        uint8[3] memory _winningNumbers;
-        for (uint256 i = 0; i < 3; i++) {
-            bytes32 randomHash = keccak256(abi.encodePacked(_randomNumber, i));
-            uint256 number = uint256(randomHash);
-            _winningNumbers[i] = uint8(number % maxNumber);
-        }
-        return _winningNumbers;
-    }
-
-    function addUserBuyAmountSum(
-        uint8[3] memory _numbers,
-        uint256 _price,
-        GoongeryOption.Buy _buyOption
-    ) internal {
-        // Create a copy of _numbers;
-        uint8[3] memory numbersForId = [_numbers[0], _numbers[1], _numbers[2]];
-
-        if (_buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
-            numbersForId = getLeastPermutableNumber(numbersForId);
-        } else if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
-            numbersForId[2] = ~uint8(0);
-        }
-
-        uint64 numberId = calculateGoongeryNumberId(numbersForId);
-        userBuyAmountSum[roundNumber][_buyOption][numberId] = userBuyAmountSum[
-            roundNumber
-        ][_buyOption][numberId]
-        .add(_price);
-    }
-
     function calculateGoongeryNumberId(uint8[3] memory _numbers)
         public
         pure
@@ -378,30 +400,5 @@ contract Goongery is Ownable {
         }
 
         return leastPossibleNumber;
-    }
-
-    function swap(
-        uint8[3] memory _numbers,
-        uint8 index1,
-        uint8 index2
-    ) private pure returns (uint8[3] memory) {
-        uint8 temp = _numbers[index1];
-        _numbers[index1] = _numbers[index2];
-        _numbers[index2] = temp;
-
-        return _numbers;
-    }
-
-    function setMaxNumber(uint8 _maxNumber) external onlyOwner {
-        require(_maxNumber >= 9, "maxNumber must be greater than 9");
-        maxNumber = _maxNumber;
-    }
-
-    function setBurnPercentage(uint8 percentage) external onlyOwner {
-        require(
-            percentage <= MAX_BURN_PERCENTAGE,
-            "Exceed max burn percentage"
-        );
-        burnPercentage = percentage;
     }
 }
