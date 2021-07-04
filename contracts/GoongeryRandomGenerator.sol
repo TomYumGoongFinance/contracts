@@ -4,6 +4,7 @@ pragma solidity 0.6.12;
 
 import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./libs/IGoongery.sol";
 import "./libs/IBEP20.sol";
 
 contract GoongeryRandomGenerator is VRFConsumerBase, Ownable {
@@ -12,8 +13,13 @@ contract GoongeryRandomGenerator is VRFConsumerBase, Ownable {
     address internal requester;
     address public link;
     uint256 public randomResult;
-    address public goongery;
-    uint256 public goongeryId;
+    IGoongery public goongery;
+    uint256 public roundNumber;
+
+    modifier onlyGoongery() {
+        require(msg.sender == address(goongery), "Caller must be Goongery");
+        _;
+    }
 
     constructor(
         address _vrfCoordinator,
@@ -22,14 +28,15 @@ contract GoongeryRandomGenerator is VRFConsumerBase, Ownable {
         bytes32 _keyHash,
         uint256 _fee
     ) public VRFConsumerBase(_vrfCoordinator, _linkToken) {
-        goongery = _goongery;
+        goongery = IGoongery(_goongery);
         fee = _fee;
         link = _linkToken;
         keyHash = _keyHash;
     }
 
-    function getRandomNumber(uint256 _goongeryId)
-        public
+    function getRandomNumber(uint256 _roundNumber)
+        external
+        onlyGoongery
         returns (bytes32 requestId)
     {
         require(keyHash != bytes32(0), "Must have valid key hash");
@@ -38,7 +45,7 @@ contract GoongeryRandomGenerator is VRFConsumerBase, Ownable {
             "Not enough LINK - fill contract with faucet"
         );
         requester = msg.sender;
-        goongeryId = _goongeryId;
+        roundNumber = _roundNumber;
         return requestRandomness(keyHash, fee);
     }
 
@@ -46,6 +53,11 @@ contract GoongeryRandomGenerator is VRFConsumerBase, Ownable {
         internal
         override
     {
+        IGoongery(requester).drawWinningNumbersCallback(
+            roundNumber,
+            requestId,
+            randomness
+        );
         randomResult = randomness;
     }
 
