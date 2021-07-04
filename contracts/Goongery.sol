@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "hardhat/console.sol";
 import "./GoongeryNFT.sol";
 import "./libs/GoongeryOption.sol";
 import "./libs/BEP20.sol";
 import "./libs/IGoongeryRandomGenerator.sol";
 
-contract Goongery is Ownable {
+contract Goongery is Ownable, Initializable {
     using SafeMath for uint256;
     using SafeMath for uint8;
     using SafeERC20 for IERC20;
@@ -85,18 +86,19 @@ contract Goongery is Ownable {
 
     event Buy(address indexed user, uint256 tokenId);
 
-    constructor(
+    function initialize(
         address _goong,
         address _goongRandomGenerator,
         address _nft,
         uint8 _maxNumber
-    ) public {
+    ) external initializer onlyOwner() {
         goong = IERC20(_goong);
         goongeryRandomGenerator = IGoongeryRandomGenerator(
             _goongRandomGenerator
         );
         nft = GoongeryNFT(_nft);
         maxNumber = _maxNumber;
+        burnPercentage = 10;
     }
 
     /**
@@ -191,12 +193,12 @@ contract Goongery is Ownable {
 
         Status lotteryStatus;
         if (_openingTimestamp >= block.timestamp) {
-            lotteryStatus = Status.Open;
-        } else {
             lotteryStatus = Status.NotStarted;
+        } else {
+            lotteryStatus = Status.Open;
         }
         uint256[] memory emptyTokenIds;
-        uint8[3] memory emptyWinningNumbers;
+        uint8[3] memory winningNumbers = [~uint8(0), ~uint8(0), ~uint8(0)];
         GoongeryInfo memory info = GoongeryInfo({
             status: lotteryStatus,
             allocation: _allocation,
@@ -204,7 +206,7 @@ contract Goongery is Ownable {
             openingTimestamp: _openingTimestamp,
             closingTimestamp: _closingTimestamp,
             tokenIds: emptyTokenIds,
-            winningNumbers: emptyWinningNumbers,
+            winningNumbers: winningNumbers,
             totalGoongPrize: 0
         });
 
@@ -220,6 +222,10 @@ contract Goongery is Ownable {
         require(
             goongeryInfo[roundNumber].status == Status.Open,
             "Invalid status"
+        );
+        require(
+            address(goongeryRandomGenerator) != address(0),
+            "Required RandomGenerator to be set"
         );
 
         goongeryInfo[roundNumber].status = Status.Closed;
@@ -400,5 +406,29 @@ contract Goongery is Ownable {
         }
 
         return leastPossibleNumber;
+    }
+
+    function getAllocation(uint256 _roundNumber)
+        external
+        view
+        returns (uint8[3] memory)
+    {
+        return goongeryInfo[_roundNumber].allocation;
+    }
+
+    function getWinningNumbers(uint256 _roundNumber)
+        external
+        view
+        returns (uint8[3] memory)
+    {
+        return goongeryInfo[_roundNumber].winningNumbers;
+    }
+
+    function getTokenIds(uint256 _roundNumber)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return goongeryInfo[_roundNumber].tokenIds;
     }
 }
