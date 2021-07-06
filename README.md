@@ -2,31 +2,6 @@
 
 https://tomyumgoong-testnet.et.r.appspot.com/ Feel free to read the code. More details coming soon.
 
-## Installation
-
-Run `npm install`
-
-## Run deploy script
-
-- Edit `scripts/libs/config.js`
-- Edit `secrets.json`
-
-Example of `secrets.json`:
-
-```
-{
-  "privateKey": "DEPLOYER_PRIVATE_KEY",
-  "apiKey": "BSCSCAN_API_KEY"
-}
-```
-
-> Note:
->
-> - timelockAddress is required for running `scripts/timelock.js`
-> - masterChefAddress is required for running `scripts/timelock.js` and `scripts/masterchef.js`
-
-- `npm run deploy` (deploy goong, masterchef, vesting and timelock)
-
 ## Deployed Contracts / Hash
 
 ### Bsc Mainnet
