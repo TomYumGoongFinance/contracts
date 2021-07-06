@@ -38,6 +38,7 @@ contract Goongery is Ownable, Initializable {
         uint256[] tokenIds;
         uint8[3] winningNumbers;
         uint256 totalGoongPrize;
+        uint256 burnAmount;
     }
 
     // Maximum burn percentage to be adjusted
@@ -50,6 +51,9 @@ contract Goongery is Ownable, Initializable {
     uint256 public constant MIN_GOONG_PER_TICKET = 1 ether;
     // Minimum number for each digit
     uint256 public constant MIN_MAX_NUMBER = 9;
+    // burn address
+    address public constant BURN_ADDRESS =
+        "0x000000000000000000000000000000000000dEaD";
     // Goong address
     IERC20 public goong;
     // NFT represent googery ticket.
@@ -163,7 +167,8 @@ contract Goongery is Ownable, Initializable {
             closingTimestamp: _closingTimestamp,
             tokenIds: emptyTokenIds,
             winningNumbers: winningNumbers,
-            totalGoongPrize: 0
+            totalGoongPrize: 0,
+            burnAmount: 0
         });
 
         roundNumber = roundNumber.add(1);
@@ -209,7 +214,11 @@ contract Goongery is Ownable, Initializable {
             _buyOption
         );
 
+        uint256 _burnAmount = totalGoongAmount.mul(burnPercentage).div(10000);
         goongeryInfo[roundNumber].tokenIds.push(tokenId);
+        goongeryInfo[roundNumber].burnAmount = goongeryInfo[roundNumber]
+        .burnAmount
+        .add(_burnAmount);
         goongeryInfo[roundNumber].totalGoongPrize = goongeryInfo[roundNumber]
         .totalGoongPrize
         .add(totalGoongAmount);
@@ -316,6 +325,18 @@ contract Goongery is Ownable, Initializable {
         goong.safeTransfer(msg.sender, reward);
     }
 
+    function burn(uint256 _roundNumber) external onlyOwner {
+        require(
+            goongeryInfo[_roundNumber].status == Status.Completed,
+            "not completed yet"
+        );
+        require(goongeryInfo[_roundNumber].burnAmount > 0, "already burned");
+
+        goong.transfer(BURN_ADDRESS, goongeryInfo[_roundNumber].burnAmount);
+
+        goongeryInfo[_roundNumber].burnAmount = 0;
+    }
+
     function _extract(uint256 _randomNumber)
         private
         view
@@ -335,6 +356,10 @@ contract Goongery is Ownable, Initializable {
             _maxNumber >= MIN_MAX_NUMBER,
             "maxNumber must be greater than 9"
         );
+        require(
+            goongeryInfo[roundNumber].status != Status.Open,
+            "Invalid status"
+        );
         maxNumber = _maxNumber;
     }
 
@@ -342,6 +367,10 @@ contract Goongery is Ownable, Initializable {
         require(
             percentage <= MAX_BURN_PERCENTAGE,
             "Exceed max burn percentage"
+        );
+        require(
+            goongeryInfo[roundNumber].status != Status.Open,
+            "Invalid status"
         );
         burnPercentage = percentage;
     }
