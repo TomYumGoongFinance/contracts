@@ -22,6 +22,16 @@ async function initialize(
   console.log("Transaction completed:", tx.transactionHash)
 }
 
+async function transferNFTOwnership(goongeryAddress, goongeryNFTAddress) {
+  const NFT = await hre.ethers.getContractFactory("GoongeryNFT")
+  const nft = await NFT.attach(goongeryNFTAddress)
+
+  const tx = await nft.transferOwnership(goongeryAddress)
+
+  console.log("Transaction completed:", tx.transactionHash)
+}
+
 module.exports = {
-  initialize
+  initialize,
+  transferNFTOwnership
 }
