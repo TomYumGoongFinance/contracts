@@ -19,6 +19,7 @@ const {
   LINK_KEY_HASH,
   LINK_FEE
 } = require("../libs/config")
+const { green } = require("chalk")
 
 async function deployGoongToken() {
   const Goong = await hre.ethers.getContractFactory("GoongToken")
@@ -161,12 +162,67 @@ async function deployGoongeryRandomGenerator(goongeryAddress) {
   }
 }
 
+async function deployLottery() {
+  const Lottery = await hre.ethers.getContractFactory("Lottery")
+  const lottery = await Lottery.deploy()
+
+  await lottery.deployed()
+
+  console.log("Deployed lottery:", lottery.address)
+
+  return {
+    contractAddress: lottery.address
+  }
+}
+
+async function deployLotteryNFT() {
+  const NFT = await hre.ethers.getContractFactory("LotteryNFT")
+  const nft = await NFT.deploy()
+
+  await nft.deployed()
+
+  console.log("Deployed nft:", nft.address)
+
+  return {
+    contractAddress: nft.address
+  }
+}
+
+async function deployGoongery() {
+  const Goongery = await hre.ethers.getContractFactory("Goongery")
+  const goongery = await Goongery.deploy()
+  await goongery.deployed()
+
+  console.log("Deployed Goongery:", goongery.address)
+
+  return {
+    contractAddress: goongery.address
+  }
+}
+
+async function deployGoongeryNFT() {
+  const GoongeryNFT = await hre.ethers.getContractFactory("GoongeryNFT")
+  const nft = await GoongeryNFT.deploy()
+
+  await nft.deployed()
+
+  console.log("Deployed goongery nft:", nft.address)
+
+  return {
+    contractAddress: nft.address
+  }
+}
+
 module.exports = {
   deployAirdropVesting,
   deployGoongIllusion,
   deployGoongToken,
   deployGoongVestingController,
   deployGoongeryRandomGenerator,
+  deployGoongery,
+  deployGoongeryNFT,
+  deployLottery,
+  deployLotteryNFT,
   deployMasterChef,
   deployTimelock,
   deployVesting

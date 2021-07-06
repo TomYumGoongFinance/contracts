@@ -3,6 +3,7 @@ require("@nomiclabs/hardhat-etherscan")
 require("hardhat-spdx-license-identifier")
 require("hardhat-gas-reporter")
 require("hardhat-contract-sizer")
+
 const { privateKey, apiKey } = require("./secrets.json")
 
 task("accounts", "Prints the list of accounts", async (args, hre) => {
@@ -19,13 +20,13 @@ module.exports = {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       chainId: 97,
       gasPrice: 20000000000,
-      accounts: [privateKey],
+      accounts: [privateKey]
     },
     mainnet: {
       url: "https://bsc-dataseed.binance.org/",
       chainId: 56,
       gasPrice: 5000000000,
-      accounts: [privateKey],
+      accounts: [privateKey]
     },
     matic: {
       url: "https://rpc-mainnet.maticvigil.com",
@@ -62,14 +63,16 @@ module.exports = {
     compilers: [
       {
         version: "0.6.12"
-      }, {
+      },
+      {
         version: "0.5.16"
-      }, {
+      },
+      {
         version: "0.5.0"
-      }, {
+      },
+      {
         version: "0.4.18"
       }
     ]
   }
-};
-
+}

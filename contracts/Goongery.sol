@@ -48,6 +48,8 @@ contract Goongery is Ownable, Initializable {
     uint256 public constant MIN_BUY_TICKET_TIME = 1 hours;
     // Minimum goong per ticket
     uint256 public constant MIN_GOONG_PER_TICKET = 1 ether;
+    // Minimum number for each digit
+    uint256 public constant MIN_MAX_NUMBER = 9;
     // Goong address
     IERC20 public goong;
     // NFT represent googery ticket.
@@ -321,7 +323,10 @@ contract Goongery is Ownable, Initializable {
     }
 
     function setMaxNumber(uint8 _maxNumber) external onlyOwner {
-        require(_maxNumber >= 9, "maxNumber must be greater than 9");
+        require(
+            _maxNumber >= MIN_MAX_NUMBER,
+            "maxNumber must be greater than 9"
+        );
         maxNumber = _maxNumber;
     }
 

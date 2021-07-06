@@ -8,7 +8,9 @@ const {
   deployGoongeryRandomGenerator,
   deployMasterChef,
   deployTimelock,
-  deployVesting
+  deployVesting,
+  deployLottery,
+  deployLotteryNFT
 } = require("./deployment")
 const { GOONGERY_ADDRESS } = require("./libs/config")
 

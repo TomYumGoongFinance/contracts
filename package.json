@@ -7,6 +7,8 @@
     "compile": "npx hardhat compile",
     "deploy-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/deploy.js --network testnet",
     "deploy-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/deploy.js --network mainnet",
+    "goongery-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/deployGoongery.js --network testnet",
+    "goongery-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/deployGoongery.js --network mainnet",
     "timelock-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/timelock.js --network mainnet",
     "timelock-testnet": "dotenv -e .env.testnet -- npx hardhat run scripts/timelock.js --network testnet",
     "goong": "npx hardhat run scripts/goong.js --network",
@@ -28,6 +30,7 @@
     "adjust-mainnet": "dotenv -e .env.mainnet -- npx hardhat run scripts/adjustPrice.js --network mainnet"
   },
   "devDependencies": {
+    "@nomiclabs/ethereumjs-vm": "^4.2.2",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-etherscan": "^2.1.2",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
