@@ -31,7 +31,7 @@ contract Goongery is Ownable, Initializable {
     // All goongery infos including past rounds.
     struct GoongeryInfo {
         Status status;
-        uint8[3] allocation;
+        uint64[3] allocation;
         uint256 goongPerTicket;
         uint256 openingTimestamp;
         uint256 closingTimestamp;
@@ -41,9 +41,9 @@ contract Goongery is Ownable, Initializable {
     }
 
     // Maximum burn percentage to be adjusted
-    uint8 public constant MAX_BURN_PERCENTAGE = 20;
+    uint64 public constant MAX_BURN_PERCENTAGE = 2000;
     // Maximum team fee percentage to be adjusted
-    uint8 public constant MAX_TEAM_FEE_PERCENTAGE = 50;
+    uint64 public constant MAX_TEAM_FEE_PERCENTAGE = 2000;
     // Minimum seconds allowed to buy ticket per round
     uint256 public constant MIN_BUY_TICKET_TIME = 1 hours;
     // Minimum goong per ticket
@@ -54,8 +54,10 @@ contract Goongery is Ownable, Initializable {
     IERC20 public goong;
     // NFT represent googery ticket.
     GoongeryNFT public nft;
+    // Address of goongery manager who has the right to call `createNewRound` and `drawWinningNumbers`
+    address public goongeryManager;
     // Percentage of total goong to be burned (0 - 100)
-    uint8 public burnPercentage;
+    uint64 public burnPercentage;
     // Maximum number for each digit
     uint8 public maxNumber;
     // Round number
@@ -83,6 +85,11 @@ contract Goongery is Ownable, Initializable {
         _;
     }
 
+    modifier onlyGoongeryManager() {
+        require(goongeryManager == msg.sender, "not goongery manager");
+        _;
+    }
+
     modifier notContract() {
         require(!address(msg.sender).isContract(), "contract not allowed");
         require(msg.sender == tx.origin, "proxy contract not allowed");
@@ -103,15 +110,16 @@ contract Goongery is Ownable, Initializable {
         );
         nft = GoongeryNFT(_nft);
         maxNumber = _maxNumber;
-        burnPercentage = 10;
+        burnPercentage = 1000;
+        goongeryManager = msg.sender;
     }
 
     function createNewRound(
-        uint8[3] calldata _allocation,
+        uint64[3] calldata _allocation,
         uint256 _goongPerTicket,
         uint256 _openingTimestamp,
         uint256 _closingTimestamp
-    ) external onlyOwner {
+    ) external onlyGoongeryManager {
         require(
             _goongPerTicket > MIN_GOONG_PER_TICKET,
             "goongPerTicket must be greater than MIN_GOONG_PER_TICKET"
@@ -135,8 +143,8 @@ contract Goongery is Ownable, Initializable {
         }
 
         require(
-            totalAllocation == 100 - burnPercentage,
-            "total allocation must be equal to 100 - burnPercentage"
+            totalAllocation == 10000 - burnPercentage,
+            "total allocation must be equal to 10000 - burnPercentage"
         );
 
         Status lotteryStatus;
@@ -224,7 +232,7 @@ contract Goongery is Ownable, Initializable {
         return numberOfTickets.mul(goongeryInfo[roundNumber].goongPerTicket);
     }
 
-    function drawWinningNumbers() external onlyOwner {
+    function drawWinningNumbers() external onlyGoongeryManager {
         require(
             goongeryInfo[roundNumber].closingTimestamp <= block.timestamp,
             "Cannot draw before close"
@@ -346,6 +354,10 @@ contract Goongery is Ownable, Initializable {
         goongeryRandomGenerator = IGoongeryRandomGenerator(_randomGenerator);
     }
 
+    function setGoongeryManager(address _goongeryManager) external onlyOwner {
+        goongeryManager = _goongeryManager;
+    }
+
     function calculateReward(
         uint256 _nftId,
         uint256 _roundNumber,
@@ -362,7 +374,7 @@ contract Goongery is Ownable, Initializable {
         uint256 totalGoongForNumbers = userBuyAmountSum[_roundNumber][
             _buyOption
         ][numberId];
-        uint8 goongAllocation = goongeryInfo[_roundNumber].allocation[
+        uint64 goongAllocation = goongeryInfo[_roundNumber].allocation[
             uint256(_buyOption)
         ];
         uint256 totalGoong = goongeryInfo[_roundNumber].totalGoongPrize;
@@ -373,7 +385,7 @@ contract Goongery is Ownable, Initializable {
                 .mul(goongAllocation)
                 .mul(userGoong)
                 .div(totalGoongForNumbers)
-                .div(100);
+                .div(10000);
     }
 
     function addUserBuyAmountSum(
@@ -463,7 +475,7 @@ contract Goongery is Ownable, Initializable {
     function getAllocation(uint256 _roundNumber)
         external
         view
-        returns (uint8[3] memory)
+        returns (uint64[3] memory)
     {
         return goongeryInfo[_roundNumber].allocation;
     }
