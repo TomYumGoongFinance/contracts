@@ -4,7 +4,7 @@ pragma solidity 0.6.12;
 
 import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./libs/IGoongery.sol";
+import "./interfaces/IGoongery.sol";
 import "./libs/IBEP20.sol";
 
 contract GoongeryRandomGenerator is VRFConsumerBase, Ownable {

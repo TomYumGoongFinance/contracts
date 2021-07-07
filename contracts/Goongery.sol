@@ -53,7 +53,7 @@ contract Goongery is Ownable, Initializable {
     uint256 public constant MIN_MAX_NUMBER = 9;
     // burn address
     address public constant BURN_ADDRESS =
-        "0x000000000000000000000000000000000000dEaD";
+        0x000000000000000000000000000000000000dEaD;
     // Goong address
     IERC20 public goong;
     // NFT represent googery ticket.
@@ -449,6 +449,62 @@ contract Goongery is Ownable, Initializable {
         _numbers[index2] = temp;
 
         return _numbers;
+    }
+
+    function calculateUnmatchedReward(uint256 _roundNumber)
+        public
+        view
+        returns (uint256)
+    {
+        require(
+            goongeryInfo[_roundNumber].status == Status.Completed,
+            "Not completed yet"
+        );
+
+        uint256 totalUnmatchedReward = 0;
+        // BuyOption: ExactThreeDigits
+        uint64 exactThreeDigitsNumberId = calculateGoongeryNumberId(
+            goongeryInfo[_roundNumber].winningNumbers
+        );
+        uint256 exactThreeDigitsTotalShared = userBuyAmountSum[roundNumber][
+            GoongeryOption.Buy.ExactThreeDigits
+        ][exactThreeDigitsNumberId];
+
+        uint64 permutableThreeDigitsNumberId = calculateGoongeryNumberId(
+            goongeryInfo[_roundNumber].winningNumbers
+        );
+        uint256 permutableThreeDigitsTotalShared = userBuyAmountSum[
+            roundNumber
+        ][GoongeryOption.Buy.PermutableThreeDigits][
+            permutableThreeDigitsNumberId
+        ];
+
+        uint64 lastTwoDigitsNumberId = calculateGoongeryNumberId(
+            goongeryInfo[_roundNumber].winningNumbers
+        );
+        uint256 lastTwoDigitsTotalShared = userBuyAmountSum[roundNumber][
+            GoongeryOption.Buy.LastTwoDigits
+        ][lastTwoDigitsNumberId];
+
+        if (exactThreeDigitsTotalShared == 0) {
+            totalUnmatchedReward = totalUnmatchedReward.add(
+                exactThreeDigitsTotalShared
+            );
+        }
+
+        if (permutableThreeDigitsTotalShared == 0) {
+            totalUnmatchedReward = totalUnmatchedReward.add(
+                exactThreeDigitsTotalShared
+            );
+        }
+
+        if (lastTwoDigitsTotalShared == 0) {
+            totalUnmatchedReward = totalUnmatchedReward.add(
+                exactThreeDigitsTotalShared
+            );
+        }
+
+        return totalUnmatchedReward;
     }
 
     function getNumbersForRewardCalculation(uint256 _nftId)
