@@ -173,21 +173,21 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         return goongeryInfo[_roundNumber].tokenIds;
     }
 
-    function getUserTokenIdsByRound(uint256 _roundNumber)
+    function getUserTokenIdsByRound(address owner, uint256 _roundNumber)
         external
         view
         override
         returns (uint256[] memory)
     {
-        return userInfoByRound[msg.sender][_roundNumber];
+        return userInfoByRound[owner][_roundNumber];
     }
 
     function addUserTokenIdsByRound(
-        address caller,
+        address owner,
         uint256 _roundNumber,
         uint256 tokenId
     ) external override onlyGoongery {
-        userInfoByRound[caller][_roundNumber].push(tokenId);
+        userInfoByRound[owner][_roundNumber].push(tokenId);
     }
 
     function calculateUnmatchedReward(uint256 _roundNumber)

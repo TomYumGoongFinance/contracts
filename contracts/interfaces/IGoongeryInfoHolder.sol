@@ -90,13 +90,13 @@ interface IGoongeryInfoHolder {
         view
         returns (uint256[] memory);
 
-    function getUserTokenIdsByRound(uint256 _roundNumber)
+    function getUserTokenIdsByRound(address owner, uint256 _roundNumber)
         external
         view
         returns (uint256[] memory);
 
     function addUserTokenIdsByRound(
-        address caller,
+        address owner,
         uint256 _roundNumber,
         uint256 tokenId
     ) external;
