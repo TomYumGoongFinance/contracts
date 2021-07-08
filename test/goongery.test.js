@@ -1,5 +1,6 @@
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
+const { deploy } = require("./libs/deploy")
 const { mine, currentBlock, currentBlockTimestamp } = require("./libs/rpc")
 const { approveTokens } = require("./libs/token")
 
@@ -11,45 +12,23 @@ describe("Goongery", async function () {
 
   beforeEach(async () => {
     const [owner] = await ethers.getSigners()
-    const GOONG = await ethers.getContractFactory("GoongToken")
-    goong = await GOONG.deploy()
-    await goong.deployed()
-
-    const LINK = await ethers.getContractFactory("LinkToken")
-    const link = await LINK.deploy()
-    await link.deployed()
-
-    const goongAmount = ethers.utils.parseEther("1000000")
-    await goong["mint(uint256)"](goongAmount)
-
-    const NFT = await ethers.getContractFactory("GoongeryNFT")
-    nft = await NFT.deploy()
-    await nft.deployed()
-
-    const Helper = await ethers.getContractFactory("GoongeryHelper")
-    helper = await Helper.deploy()
-    await helper.deployed()
-
-    const Goongery = await ethers.getContractFactory("Goongery")
-    goongery = await Goongery.deploy()
-    await goongery.deployed()
-
-    const GoongeryInfoHolder = await ethers.getContractFactory(
+    goong = await deploy("GoongToken")
+    link = await deploy("LinkToken")
+    nft = await deploy("GoongeryNFT")
+    helper = await deploy("GoongeryHelper")
+    goongery = await deploy("Goongery")
+    infoHolder = await deploy(
       "GoongeryInfoHolder",
+      [goongery.address, nft.address],
       {
         libraries: {
           GoongeryHelper: helper.address
         }
       }
     )
-    infoHolder = await GoongeryInfoHolder.deploy(goongery.address, nft.address)
-    await infoHolder.deployed()
 
     await nft.transferOwnership(goongery.address).then((tx) => tx.wait())
 
-    const GoongRandomGenerator = await ethers.getContractFactory(
-      "GoongeryRandomGenerator"
-    )
     const randomGeneratorParams = [
       owner.address,
       link.address,
@@ -57,43 +36,27 @@ describe("Goongery", async function () {
       "0xcaf3c3727e033261d383b315559476f48034c13b18f8cafed4d871abe5049186",
       1
     ]
-    const goongRandomGenerator = await GoongRandomGenerator.deploy(
-      ...randomGeneratorParams
+    const goongeryRandomGenerator = await deploy(
+      "GoongeryRandomGenerator",
+      randomGeneratorParams
     )
-    await goongRandomGenerator.deployed()
+
+    const goongAmount = ethers.utils.parseEther("1000000")
+    await goong["mint(uint256)"](goongAmount)
 
     await link["transfer(address,uint256)"](
-      goongRandomGenerator.address,
+      goongeryRandomGenerator.address,
       ethers.utils.parseEther("100000000")
     )
 
     await goongery
       .initialize(
         goong.address,
-        goongRandomGenerator.address,
+        goongeryRandomGenerator.address,
         nft.address,
         infoHolder.address
       )
       .then((tx) => tx.wait)
-  })
-  describe.skip("getLeastPermutableNumber", async function () {
-    it("should returns ascending sorted array", async function () {
-      expect(await goongery.getLeastPermutableNumber([3, 2, 1])).to.be.eql([
-        1, 2, 3
-      ])
-      expect(await goongery.getLeastPermutableNumber([2, 3, 1])).to.be.eql([
-        1, 2, 3
-      ])
-      expect(await goongery.getLeastPermutableNumber([1, 2, 3])).to.be.eql([
-        1, 2, 3
-      ])
-      expect(await goongery.getLeastPermutableNumber([2, 1, 1])).to.be.eql([
-        1, 1, 2
-      ])
-      expect(await goongery.getLeastPermutableNumber([1, 1, 1])).to.be.eql([
-        1, 1, 1
-      ])
-    })
   })
 
   describe("createNewRound", async function () {
