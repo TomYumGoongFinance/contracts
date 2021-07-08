@@ -131,6 +131,58 @@ describe("Goongery", async function () {
       expect(infos.totalGoongPrize).to.be.eq(0)
       expect(infos.goongPerTicket).to.be.eq(goongPerTicket)
     })
+
+    it("should add previous round rewards when there're at least one allocation pool that no one wins", async () => {
+      const timestamp = await currentBlockTimestamp()
+      const _allocation = ["6000", "2000", "1000"]
+      const _openingTimestamp = timestamp + 200
+      const _closingTimestamp = timestamp + 4000
+
+      await goongery
+        .createNewRound(
+          _allocation,
+          goongPerTicket,
+          burnPercentage,
+          maxNumber,
+          _openingTimestamp,
+          _closingTimestamp
+        )
+        .then((tx) => tx.wait())
+
+      await approveTokens([goong], goongery.address)
+
+      await mine(_openingTimestamp - timestamp)
+
+      await goongery.buy(50, [0, 0, 0], 0).then((tx) => tx.wait())
+
+      await mine(_closingTimestamp - _openingTimestamp + 1)
+      await goongery.drawWinningNumbers().then((tx) => tx.wait())
+      const [owner] = await ethers.getSigners()
+      await goongery.setGoongeryRandomGenerator(owner.address)
+      const requestId = await goongery.requestId()
+      const randomness = 10000
+      await goongery
+        .drawWinningNumbersCallback(1, requestId, randomness)
+        .then((tx) => tx.wait())
+
+      await goongery
+        .createNewRound(
+          _allocation,
+          goongPerTicket,
+          burnPercentage,
+          maxNumber,
+          _closingTimestamp + 100,
+          _closingTimestamp + 4000
+        )
+        .then((tx) => tx.wait())
+
+      const infos = await infoHolder.getGoongeryInfo(2)
+      const expectedTotalGoongPrize = goongPerTicket
+        .mul(50)
+        .mul(10000 - burnPercentage)
+        .div(10000)
+      expect(infos.totalGoongPrize).to.be.eq(expectedTotalGoongPrize)
+    })
   })
 
   describe("buy", async function () {
@@ -429,6 +481,75 @@ describe("Goongery", async function () {
         await goongery.claimReward(1, nftId).then((tx) => tx.wait())
       }
 
+      const balanceAfterClaimedReward = await goong.balanceOf(owner.address)
+      expect(initialBalance.sub(totalTicketCost).add(reward)).to.be.eq(
+        balanceAfterClaimedReward
+      )
+    })
+
+    it("should receive 10% of total goong, given there's only one ticket won last 2 digits prize", async function () {
+      const buyOption = 2
+
+      const initialBalance = await goong.balanceOf(owner.address)
+      const totalTicketCost =
+        ethers.BigNumber.from(numberOfTickets).mul(goongPerTicket)
+
+      await goongery
+        .buy(
+          numberOfTickets,
+          [_winningNumbers[1], _winningNumbers[2], 255],
+          buyOption
+        )
+        .then((tx) => tx.wait())
+
+      const nftId = await goongery.userInfo(owner.address, 0)
+
+      await drawWinningNumbers()
+
+      const reward = totalTicketCost.mul(10).div(100)
+
+      await goongery.claimReward(1, nftId).then((tx) => tx.wait())
+      const balanceAfterClaimedReward = await goong.balanceOf(owner.address)
+      expect(initialBalance.sub(totalTicketCost).add(reward)).to.be.eq(
+        balanceAfterClaimedReward
+      )
+    })
+
+    it("should receive half of 10% of total goong per ticket, given there's two tickets won last 2 digits prize equally", async function () {
+      const buyOption = 2
+
+      const initialBalance = await goong.balanceOf(owner.address)
+      const totalTicketCost = ethers.BigNumber.from(numberOfTickets)
+        .mul(goongPerTicket)
+        .mul(2)
+
+      await goongery
+        .buy(
+          numberOfTickets,
+          [_winningNumbers[1], _winningNumbers[2], 255],
+          buyOption
+        )
+        .then((tx) => tx.wait())
+
+      await goongery
+        .buy(
+          numberOfTickets,
+          [_winningNumbers[1], _winningNumbers[2], 255],
+          buyOption
+        )
+        .then((tx) => tx.wait())
+
+      const nftId = await goongery.userInfo(owner.address, 0)
+
+      await drawWinningNumbers()
+
+      const totalGoongPrize = await infoHolder
+        .getGoongeryInfo(1)
+        .then((i) => i.totalGoongPrize)
+
+      const reward = totalGoongPrize.mul(10).div(100).div(2)
+
+      await goongery.claimReward(1, nftId).then((tx) => tx.wait())
       const balanceAfterClaimedReward = await goong.balanceOf(owner.address)
       expect(initialBalance.sub(totalTicketCost).add(reward)).to.be.eq(
         balanceAfterClaimedReward

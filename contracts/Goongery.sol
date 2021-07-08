@@ -142,6 +142,11 @@ contract Goongery is Ownable, Initializable {
         }
         uint256[] memory emptyTokenIds;
         uint8[3] memory winningNumbers = [~uint8(0), ~uint8(0), ~uint8(0)];
+
+        uint256 _totalGoongPrize = goongeryInfoHolder.calculateUnmatchedReward(
+            roundNumber
+        );
+
         GoongeryInfo memory info = GoongeryInfo({
             status: lotteryStatus,
             allocation: _allocation,
@@ -150,7 +155,7 @@ contract Goongery is Ownable, Initializable {
             closingTimestamp: _closingTimestamp,
             tokenIds: emptyTokenIds,
             winningNumbers: winningNumbers,
-            totalGoongPrize: 0,
+            totalGoongPrize: _totalGoongPrize,
             burnAmount: 0,
             burnPercentage: _burnPercentage,
             maxNumber: _maxNumber
@@ -182,7 +187,12 @@ contract Goongery is Ownable, Initializable {
             "block timestamp >= closingTimestamp"
         );
 
-        for (uint8 i = 0; i < 3; i++) {
+        uint8 upperBound = 3;
+        if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
+            upperBound = 2;
+        }
+
+        for (uint8 i = 0; i < upperBound; i++) {
             require(
                 _numbers[i] <= goongeryInfo.maxNumber,
                 "exceed max number allowed"

@@ -110,11 +110,6 @@ interface IGoongeryInfoHolder {
         view
         returns (uint256);
 
-    function calculateGoongeryNumberId(uint8[3] memory _numbers)
-        external
-        pure
-        returns (uint64);
-
     function setGoongeryInfoStatus(uint256 _roundNumber, Status _status)
         external;
 

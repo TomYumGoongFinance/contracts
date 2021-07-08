@@ -9,6 +9,7 @@ import "./libs/GoongeryOption.sol";
 import "./libs/GoongeryHelper.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./GoongeryNFT.sol";
+import "hardhat/console.sol";
 
 contract GoongeryInfoHolder is IGoongeryInfoHolder {
     using SafeMath for uint256;
@@ -195,30 +196,23 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         override
         returns (uint256)
     {
-        require(
-            goongeryInfo[_roundNumber].status == Status.Completed,
-            "Not completed yet"
-        );
-
         uint256 totalUnmatchedReward = 0;
         // BuyOption: ExactThreeDigits
-        uint64 exactThreeDigitsNumberId = calculateGoongeryNumberId(
-            goongeryInfo[_roundNumber].winningNumbers
-        );
+        uint64 exactThreeDigitsNumberId = GoongeryHelper
+        .calculateGoongeryNumberId(goongeryInfo[_roundNumber].winningNumbers);
         uint256 exactThreeDigitsTotalShared = userBuyAmountSum[_roundNumber][
             GoongeryOption.Buy.ExactThreeDigits
         ][exactThreeDigitsNumberId];
 
-        uint64 permutableThreeDigitsNumberId = calculateGoongeryNumberId(
-            goongeryInfo[_roundNumber].winningNumbers
-        );
+        uint64 permutableThreeDigitsNumberId = GoongeryHelper
+        .calculateGoongeryNumberId(goongeryInfo[_roundNumber].winningNumbers);
         uint256 permutableThreeDigitsTotalShared = userBuyAmountSum[
             _roundNumber
         ][GoongeryOption.Buy.PermutableThreeDigits][
             permutableThreeDigitsNumberId
         ];
 
-        uint64 lastTwoDigitsNumberId = calculateGoongeryNumberId(
+        uint64 lastTwoDigitsNumberId = GoongeryHelper.calculateGoongeryNumberId(
             goongeryInfo[_roundNumber].winningNumbers
         );
         uint256 lastTwoDigitsTotalShared = userBuyAmountSum[_roundNumber][
@@ -227,32 +221,32 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
 
         if (exactThreeDigitsTotalShared == 0) {
             totalUnmatchedReward = totalUnmatchedReward.add(
-                exactThreeDigitsTotalShared
+                goongeryInfo[_roundNumber]
+                .totalGoongPrize
+                .mul(goongeryInfo[_roundNumber].allocation[0])
+                .div(10000)
             );
         }
 
         if (permutableThreeDigitsTotalShared == 0) {
             totalUnmatchedReward = totalUnmatchedReward.add(
-                exactThreeDigitsTotalShared
+                goongeryInfo[_roundNumber]
+                .totalGoongPrize
+                .mul(goongeryInfo[_roundNumber].allocation[1])
+                .div(10000)
             );
         }
 
         if (lastTwoDigitsTotalShared == 0) {
             totalUnmatchedReward = totalUnmatchedReward.add(
-                exactThreeDigitsTotalShared
+                goongeryInfo[_roundNumber]
+                .totalGoongPrize
+                .mul(goongeryInfo[_roundNumber].allocation[2])
+                .div(10000)
             );
         }
 
         return totalUnmatchedReward;
-    }
-
-    function calculateGoongeryNumberId(uint8[3] memory _numbers)
-        public
-        pure
-        override
-        returns (uint64)
-    {
-        return _numbers[0] * 256**2 + _numbers[1] * 256 + _numbers[2];
     }
 
     function addUserBuyAmount(
