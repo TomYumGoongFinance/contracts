@@ -226,7 +226,11 @@ contract Goongery is Ownable, Initializable {
             roundNumber,
             totalGoongAmount
         );
-        goongeryInfoHolder.addUserTokenIdsByRound(roundNumber, tokenId);
+        goongeryInfoHolder.addUserTokenIdsByRound(
+            msg.sender,
+            roundNumber,
+            tokenId
+        );
 
         userInfo[msg.sender].push(tokenId);
 

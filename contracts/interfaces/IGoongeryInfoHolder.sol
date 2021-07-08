@@ -95,8 +95,11 @@ interface IGoongeryInfoHolder {
         view
         returns (uint256[] memory);
 
-    function addUserTokenIdsByRound(uint256 _roundNumber, uint256 tokenId)
-        external;
+    function addUserTokenIdsByRound(
+        address caller,
+        uint256 _roundNumber,
+        uint256 tokenId
+    ) external;
 
     function addUserBuyAmountSum(
         uint256 roundNumber,
