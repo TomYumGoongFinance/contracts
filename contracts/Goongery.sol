@@ -41,10 +41,6 @@ contract Goongery is Ownable, Initializable {
     GoongeryNFT public nft;
     // Address of goongery manager who has the right to call `createNewRound` and `drawWinningNumbers`
     address public goongeryManager;
-    // Percentage of total goong to be burned (0 - 100)
-    uint64 public burnPercentage;
-    // Maximum number for each digit
-    uint8 public maxNumber;
     // Round number
     uint256 public roundNumber = 0;
     // Random generator
@@ -83,23 +79,22 @@ contract Goongery is Ownable, Initializable {
         address _goong,
         address _goongRandomGenerator,
         address _nft,
-        address _goongeryInfoHolder,
-        uint8 _maxNumber
+        address _goongeryInfoHolder
     ) external initializer onlyOwner() {
         goong = IERC20(_goong);
         goongeryRandomGenerator = IGoongeryRandomGenerator(
             _goongRandomGenerator
         );
         nft = GoongeryNFT(_nft);
-        maxNumber = _maxNumber;
         goongeryInfoHolder = IGoongeryInfoHolder(_goongeryInfoHolder);
-        burnPercentage = 1000;
         goongeryManager = msg.sender;
     }
 
     function createNewRound(
         uint64[3] calldata _allocation,
         uint256 _goongPerTicket,
+        uint8 _burnPercentage,
+        uint8 _maxNumber,
         uint256 _openingTimestamp,
         uint256 _closingTimestamp
     ) external onlyGoongeryManager {
@@ -110,6 +105,14 @@ contract Goongery is Ownable, Initializable {
         require(
             _openingTimestamp > block.timestamp,
             "openingTimstamp cannot be the past"
+        );
+        require(
+            _burnPercentage <= MAX_BURN_PERCENTAGE,
+            "Exceed max burn percentage"
+        );
+        require(
+            _maxNumber >= MIN_MAX_NUMBER,
+            "maxNumber must be greater than 9"
         );
 
         GoongeryInfo memory goongeryInfo = getCurrentGoongeryInfo();
@@ -128,7 +131,7 @@ contract Goongery is Ownable, Initializable {
         }
 
         require(
-            totalAllocation == 10000 - burnPercentage,
+            totalAllocation == 10000 - _burnPercentage,
             "total allocation must be equal to 10000 - burnPercentage"
         );
 
@@ -149,7 +152,9 @@ contract Goongery is Ownable, Initializable {
             tokenIds: emptyTokenIds,
             winningNumbers: winningNumbers,
             totalGoongPrize: 0,
-            burnAmount: 0
+            burnAmount: 0,
+            burnPercentage: _burnPercentage,
+            maxNumber: _maxNumber
         });
 
         roundNumber = roundNumber.add(1);
@@ -179,7 +184,10 @@ contract Goongery is Ownable, Initializable {
         );
 
         for (uint8 i = 0; i < 3; i++) {
-            require(_numbers[i] <= maxNumber, "exceed max number allowed");
+            require(
+                _numbers[i] <= goongeryInfo.maxNumber,
+                "exceed max number allowed"
+            );
         }
 
         if (goongeryInfo.status == Status.NotStarted) {
@@ -199,7 +207,9 @@ contract Goongery is Ownable, Initializable {
             _buyOption
         );
 
-        uint256 _burnAmount = totalGoongAmount.mul(burnPercentage).div(10000);
+        uint256 _burnAmount = totalGoongAmount
+        .mul(goongeryInfo.burnPercentage)
+        .div(10000);
 
         goongeryInfoHolder.addGoongeryInfoTokenId(roundNumber, tokenId);
         goongeryInfoHolder.addGoongeryInfoBurnAmount(roundNumber, _burnAmount);
@@ -245,11 +255,12 @@ contract Goongery is Ownable, Initializable {
         bytes32 _requestId,
         uint256 _randomNumber
     ) external onlyRandomGenerator {
+        GoongeryInfo memory goongeryInfo = getCurrentGoongeryInfo();
         if (_requestId == requestId) {
             goongeryInfoHolder.drawWinningNumbersCallback(
                 _roundNumber,
                 _randomNumber,
-                maxNumber
+                goongeryInfo.maxNumber
             );
         }
     }
@@ -320,29 +331,6 @@ contract Goongery is Ownable, Initializable {
         goong.transfer(BURN_ADDRESS, goongeryInfo.burnAmount);
 
         goongeryInfoHolder.setGoongeryInfoBurnAmount(_roundNumber, 0);
-    }
-
-    function setMaxNumber(uint8 _maxNumber) external onlyOwner {
-        require(
-            _maxNumber >= MIN_MAX_NUMBER,
-            "maxNumber must be greater than 9"
-        );
-        require(
-            getCurrentGoongeryInfo().status != Status.Open,
-            "Invalid status"
-        );
-        maxNumber = _maxNumber;
-    }
-
-    function setBurnPercentage(uint8 percentage) external onlyOwner {
-        GoongeryInfo memory goongeryInfo = getCurrentGoongeryInfo();
-
-        require(
-            percentage <= MAX_BURN_PERCENTAGE,
-            "Exceed max burn percentage"
-        );
-        require(goongeryInfo.status != Status.Open, "Invalid status");
-        burnPercentage = percentage;
     }
 
     // Todo: Remove when done test

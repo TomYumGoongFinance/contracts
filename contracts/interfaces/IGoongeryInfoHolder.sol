@@ -23,6 +23,8 @@ struct GoongeryInfo {
     uint8[3] winningNumbers;
     uint256 totalGoongPrize;
     uint256 burnAmount;
+    uint8 burnPercentage;
+    uint8 maxNumber;
 }
 
 interface IGoongeryInfoHolder {
