@@ -146,6 +146,8 @@ describe("Goongery", async function () {
         .div(10000)
       expect(infos.totalGoongPrize).to.be.eq(expectedTotalGoongPrize)
     })
+
+    it("should reverted: `goongPerTicket` must be greater than MIN_GOONG_PER_TICKET given goongPerTicket = 0.1", async () => {})
   })
 
   describe("buy", async function () {

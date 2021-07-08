@@ -213,14 +213,58 @@ async function deployGoongeryNFT() {
   }
 }
 
+async function deployGoongeryHelper() {
+  const GoongeryHelper = await hre.ethers.getContractFactory("GoongeryHelper")
+  const helper = await GoongeryHelper.deploy()
+
+  await helper.deployed()
+
+  console.log("Deployed goongery helper:", helper.address)
+
+  return {
+    contractAddress: helper.address
+  }
+}
+
+async function deployGoongeryInfoHolder(
+  goongeryAddress,
+  nftAddress,
+  helperAddress
+) {
+  const GoongeryInfoHolder = await hre.ethers.getContractFactory(
+    "GoongeryInfoHolder",
+    {
+      libraries: {
+        GoongeryHelper: helperAddress
+      }
+    }
+  )
+  const constructorParams = [goongeryAddress, nftAddress]
+  const infoHolder = await GoongeryInfoHolder.deploy(
+    goongeryAddress,
+    nftAddress
+  )
+
+  await infoHolder.deployed()
+
+  console.log("Deployed goongery info holder:", infoHolder.address)
+
+  return {
+    contractAddress: infoHolder.address,
+    params: constructorParams
+  }
+}
+
 module.exports = {
   deployAirdropVesting,
   deployGoongIllusion,
   deployGoongToken,
   deployGoongVestingController,
   deployGoongeryRandomGenerator,
+  deployGoongeryInfoHolder,
   deployGoongery,
   deployGoongeryNFT,
+  deployGoongeryHelper,
   deployLottery,
   deployLotteryNFT,
   deployMasterChef,

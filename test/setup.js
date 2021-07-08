@@ -4,7 +4,6 @@ const { approveTokens, printBalance } = require("./libs/token")
 const { printContractAddress } = require("./libs/utils")
 const { log } = require("./libs/utils")
 
-
 async function setupTests() {
   let [owner] = await ethers.getSigners()
   const WETH = await ethers.getContractFactory("WETH")

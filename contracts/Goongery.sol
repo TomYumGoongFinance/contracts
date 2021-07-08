@@ -98,7 +98,7 @@ contract Goongery is Ownable, Initializable {
         uint256 _closingTimestamp
     ) external onlyGoongeryManager {
         require(
-            _goongPerTicket > MIN_GOONG_PER_TICKET,
+            _goongPerTicket >= MIN_GOONG_PER_TICKET,
             "goongPerTicket must be greater than MIN_GOONG_PER_TICKET"
         );
         require(
