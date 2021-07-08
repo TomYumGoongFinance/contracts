@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "hardhat/console.sol";
 import "./GoongeryNFT.sol";
 import "./libs/GoongeryOption.sol";
-import "./libs/GoongeryHelper.sol";
 import "./libs/BEP20.sol";
 import "./interfaces/IGoongeryRandomGenerator.sol";
 import "./interfaces/IGoongeryInfoHolder.sol";
@@ -93,7 +92,7 @@ contract Goongery is Ownable, Initializable {
     function createNewRound(
         uint64[3] calldata _allocation,
         uint256 _goongPerTicket,
-        uint8 _burnPercentage,
+        uint64 _burnPercentage,
         uint8 _maxNumber,
         uint256 _openingTimestamp,
         uint256 _closingTimestamp
@@ -286,7 +285,11 @@ contract Goongery is Ownable, Initializable {
         nft.claimReward(_nftId);
 
         GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
-        uint256 reward = calculateReward(_nftId, _roundNumber, _buyOption);
+        uint256 reward = goongeryInfoHolder.calculateReward(
+            _nftId,
+            _roundNumber,
+            _buyOption
+        );
         goong.safeTransfer(msg.sender, reward);
     }
 
@@ -315,7 +318,11 @@ contract Goongery is Ownable, Initializable {
             nft.claimReward(_nftId);
             GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
             reward = reward.add(
-                calculateReward(_nftId, _roundNumber, _buyOption)
+                goongeryInfoHolder.calculateReward(
+                    _nftId,
+                    _roundNumber,
+                    _buyOption
+                )
             );
         }
         goong.safeTransfer(msg.sender, reward);
@@ -343,54 +350,5 @@ contract Goongery is Ownable, Initializable {
 
     function setGoongeryManager(address _goongeryManager) external onlyOwner {
         goongeryManager = _goongeryManager;
-    }
-
-    function calculateReward(
-        uint256 _nftId,
-        uint256 _roundNumber,
-        GoongeryOption.Buy _buyOption
-    ) public view returns (uint256) {
-        GoongeryInfo memory goongeryInfo = goongeryInfoHolder.getGoongeryInfo(
-            _roundNumber
-        );
-        if (goongeryInfo.status != Status.Completed) {
-            return 0;
-        }
-
-        uint8[3] memory _numbers = getNumbersForRewardCalculation(_nftId);
-
-        uint64 numberId = GoongeryHelper.calculateGoongeryNumberId(_numbers);
-
-        uint256 totalGoongForNumbers = goongeryInfoHolder.getUserBuyAmountSum(
-            _roundNumber,
-            numberId,
-            _buyOption
-        );
-        uint64 goongAllocation = goongeryInfo.allocation[uint256(_buyOption)];
-        uint256 totalGoong = goongeryInfo.totalGoongPrize;
-        uint256 userGoong = nft.getAmount(_nftId);
-
-        return
-            totalGoong
-                .mul(goongAllocation)
-                .mul(userGoong)
-                .div(totalGoongForNumbers)
-                .div(10000);
-    }
-
-    function getNumbersForRewardCalculation(uint256 _nftId)
-        private
-        view
-        returns (uint8[3] memory)
-    {
-        uint8[3] memory buyNumbers = nft.getNumbers(_nftId);
-        GoongeryOption.Buy buyOption = nft.getBuyOption(_nftId);
-        if (buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
-            return GoongeryHelper.getLeastPermutableNumber(buyNumbers);
-        } else if (buyOption == GoongeryOption.Buy.LastTwoDigits) {
-            buyNumbers[2] = ~uint8(0);
-        }
-
-        return buyNumbers;
     }
 }

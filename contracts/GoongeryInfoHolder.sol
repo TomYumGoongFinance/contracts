@@ -8,12 +8,14 @@ import "./interfaces/IGoongeryInfoHolder.sol";
 import "./libs/GoongeryOption.sol";
 import "./libs/GoongeryHelper.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./GoongeryNFT.sol";
 
 contract GoongeryInfoHolder is IGoongeryInfoHolder {
     using SafeMath for uint256;
     using SafeMath for uint8;
 
     IGoongery goongery;
+    GoongeryNFT public nft;
 
     // roundNumber => GoongeryInfo
     mapping(uint256 => GoongeryInfo) public goongeryInfo;
@@ -29,8 +31,9 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         _;
     }
 
-    constructor(address _goongery) public {
+    constructor(address _goongery, address _nft) public {
         goongery = IGoongery(_goongery);
+        nft = GoongeryNFT(_nft);
     }
 
     function getGoongeryInfo(uint256 _roundNumber)
@@ -59,6 +62,54 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         onlyGoongery
     {
         goongeryInfo[_roundNumber].status = _status;
+    }
+
+    function calculateReward(
+        uint256 _nftId,
+        uint256 _roundNumber,
+        GoongeryOption.Buy _buyOption
+    ) external view override returns (uint256) {
+        if (goongeryInfo[_roundNumber].status != Status.Completed) {
+            return 0;
+        }
+
+        uint8[3] memory _numbers = getNumbersForRewardCalculation(_nftId);
+
+        uint64 numberId = GoongeryHelper.calculateGoongeryNumberId(_numbers);
+
+        uint256 totalGoongForNumbers = getUserBuyAmountSum(
+            _roundNumber,
+            numberId,
+            _buyOption
+        );
+        uint64 goongAllocation = goongeryInfo[_roundNumber].allocation[
+            uint256(_buyOption)
+        ];
+        uint256 totalGoong = goongeryInfo[_roundNumber].totalGoongPrize;
+        uint256 userGoong = nft.getAmount(_nftId);
+
+        return
+            totalGoong
+                .mul(goongAllocation)
+                .mul(userGoong)
+                .div(totalGoongForNumbers)
+                .div(10000);
+    }
+
+    function getNumbersForRewardCalculation(uint256 _nftId)
+        private
+        view
+        returns (uint8[3] memory)
+    {
+        uint8[3] memory buyNumbers = nft.getNumbers(_nftId);
+        GoongeryOption.Buy buyOption = nft.getBuyOption(_nftId);
+        if (buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
+            return GoongeryHelper.getLeastPermutableNumber(buyNumbers);
+        } else if (buyOption == GoongeryOption.Buy.LastTwoDigits) {
+            buyNumbers[2] = ~uint8(0);
+        }
+
+        return buyNumbers;
     }
 
     function setGoongeryInfoBurnAmount(
@@ -247,7 +298,7 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         uint256 _roundNumber,
         uint64 _numberId,
         GoongeryOption.Buy _buyOption
-    ) external view override returns (uint256) {
+    ) public view override returns (uint256) {
         return userBuyAmountSum[_roundNumber][_buyOption][_numberId];
     }
 

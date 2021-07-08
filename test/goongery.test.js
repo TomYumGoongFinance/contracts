@@ -6,6 +6,9 @@ const { approveTokens } = require("./libs/token")
 describe("Goongery", async function () {
   const goongPerTicket = ethers.utils.parseEther("100")
   let goong, goongery, nft, helper, infoHolder
+  const burnPercentage = 1000
+  const maxNumber = 9
+
   beforeEach(async () => {
     const [owner] = await ethers.getSigners()
     const GOONG = await ethers.getContractFactory("GoongToken")
@@ -27,11 +30,7 @@ describe("Goongery", async function () {
     helper = await Helper.deploy()
     await helper.deployed()
 
-    const Goongery = await ethers.getContractFactory("Goongery", {
-      libraries: {
-        GoongeryHelper: helper.address
-      }
-    })
+    const Goongery = await ethers.getContractFactory("Goongery")
     goongery = await Goongery.deploy()
     await goongery.deployed()
 
@@ -43,7 +42,7 @@ describe("Goongery", async function () {
         }
       }
     )
-    infoHolder = await GoongeryInfoHolder.deploy(goongery.address)
+    infoHolder = await GoongeryInfoHolder.deploy(goongery.address, nft.address)
     await infoHolder.deployed()
 
     await nft.transferOwnership(goongery.address).then((tx) => tx.wait())
@@ -73,8 +72,7 @@ describe("Goongery", async function () {
         goong.address,
         goongRandomGenerator.address,
         nft.address,
-        infoHolder.address,
-        10
+        infoHolder.address
       )
       .then((tx) => tx.wait)
   })
@@ -109,6 +107,8 @@ describe("Goongery", async function () {
       await goongery.createNewRound(
         _allocation,
         goongPerTicket,
+        burnPercentage,
+        maxNumber,
         _openingTimestamp,
         _closingTimestamp
       )
@@ -143,6 +143,8 @@ describe("Goongery", async function () {
       await goongery.createNewRound(
         _allocation,
         goongPerTicket,
+        burnPercentage,
+        maxNumber,
         _openingTimestamp,
         _closingTimestamp
       )
@@ -178,6 +180,8 @@ describe("Goongery", async function () {
       await goongery.createNewRound(
         _allocation,
         goongPerTicket,
+        burnPercentage,
+        maxNumber,
         _openingTimestamp,
         _closingTimestamp
       )
@@ -212,6 +216,8 @@ describe("Goongery", async function () {
       await goongery.createNewRound(
         _allocation,
         goongPerTicket,
+        burnPercentage,
+        maxNumber,
         _openingTimestamp,
         _closingTimestamp
       )
@@ -246,7 +252,7 @@ describe("Goongery", async function () {
           [randomness, i]
         )
         const hashNumber = ethers.BigNumber.from(hash)
-        _winningNumbers[i] = hashNumber.mod(10).toNumber()
+        _winningNumbers[i] = hashNumber.mod(maxNumber).toNumber()
       }
       expect(winningNumbers).to.be.eql(_winningNumbers)
       const info = await infoHolder.goongeryInfo(1)
@@ -269,6 +275,8 @@ describe("Goongery", async function () {
       await goongery.createNewRound(
         _allocation,
         goongPerTicket,
+        burnPercentage,
+        maxNumber,
         _openingTimestamp,
         _closingTimestamp
       )

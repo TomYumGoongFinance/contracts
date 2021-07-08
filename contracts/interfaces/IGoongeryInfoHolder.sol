@@ -23,7 +23,7 @@ struct GoongeryInfo {
     uint8[3] winningNumbers;
     uint256 totalGoongPrize;
     uint256 burnAmount;
-    uint8 burnPercentage;
+    uint64 burnPercentage;
     uint8 maxNumber;
 }
 
@@ -68,6 +68,12 @@ interface IGoongeryInfoHolder {
         uint256 _roundNumber,
         uint256 _burnAmount
     ) external;
+
+    function calculateReward(
+        uint256 _nftId,
+        uint256 _roundNumber,
+        GoongeryOption.Buy _buyOption
+    ) external view returns (uint256);
 
     function getAllocation(uint256 _roundNumber)
         external
