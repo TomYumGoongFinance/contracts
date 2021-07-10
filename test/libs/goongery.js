@@ -1,0 +1,67 @@
+const { mine, currentBlock, currentBlockTimestamp } = require("./rpc")
+const { ethers } = require("hardhat")
+
+async function createNewRound(goongery, _args = {}) {
+  const timestamp = await currentBlockTimestamp()
+
+  let allocation = _args.allocation || ["6000", "2000", "1000"]
+  let goongPerTicket = _args.goongPerTicket || ethers.utils.parseEther("100")
+  let burnPercentage = _args.burnPercentage || 1000
+  let openingTimestamp = _args.openingTimestamp || timestamp + 200
+  let closingTimestamp = _args.closingTimestamp || timestamp + 4000
+  let maxNumber = _args.maxNumber || 9
+
+  const args = {
+    allocation,
+    goongPerTicket,
+    burnPercentage,
+    maxNumber,
+    openingTimestamp,
+    closingTimestamp
+  }
+
+  await goongery
+    .createNewRound(
+      allocation,
+      goongPerTicket,
+      burnPercentage,
+      maxNumber,
+      openingTimestamp,
+      closingTimestamp
+    )
+    .then((tx) => tx.wait())
+
+  return args
+}
+
+async function enterBuyingPhase(openingTimestamp) {
+  const timestamp = await currentBlockTimestamp()
+  await mine(openingTimestamp - timestamp)
+}
+
+async function enterDrawingPhase(openingTimestamp, closingTimestamp) {
+  await mine(closingTimestamp - openingTimestamp + 1)
+}
+
+async function drawWinningNumbers(goongery, args = { }) {
+  await goongery.drawWinningNumbers().then((tx) => tx.wait())
+  const [owner] = await ethers.getSigners()
+  await goongery
+    .setGoongeryRandomGenerator(owner.address)
+    .then((tx) => tx.wait())
+  const requestId = await goongery.requestId()
+  const randomness = args.randomness || 10000
+
+  return goongery
+    .drawWinningNumbersCallback(1, requestId, randomness)
+    .then((tx) => tx.wait())
+}
+
+// function buy
+
+module.exports = {
+  createNewRound,
+  enterBuyingPhase,
+  enterDrawingPhase,
+  drawWinningNumbers
+}

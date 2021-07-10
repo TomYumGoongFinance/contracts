@@ -2,6 +2,12 @@ const { expect } = require("chai")
 const { ethers } = require("hardhat")
 const { deploy } = require("./libs/deploy")
 const { mine, currentBlock, currentBlockTimestamp } = require("./libs/rpc")
+const {
+  createNewRound,
+  enterBuyingPhase,
+  drawWinningNumbers,
+  enterDrawingPhase
+} = require("./libs/goongery")
 const { approveTokens } = require("./libs/token")
 
 describe("Goongery", async function () {
@@ -61,20 +67,13 @@ describe("Goongery", async function () {
 
   describe("createNewRound", async function () {
     it("should create goongery info and increment roundNumber by 1 when pass all validations", async () => {
-      const timestamp = await currentBlockTimestamp()
-      const _allocation = ["6000", "2000", "1000"]
       const _winningNumbers = [255, 255, 255]
-      const _openingTimestamp = timestamp + 200
-      const _closingTimestamp = timestamp + 4000
-
-      await goongery.createNewRound(
-        _allocation,
+      let {
+        allocation: _allocation,
         goongPerTicket,
-        burnPercentage,
-        maxNumber,
-        _openingTimestamp,
-        _closingTimestamp
-      )
+        closingTimestamp,
+        openingTimestamp
+      } = await createNewRound(goongery)
 
       const currentRoundNumber = await goongery.roundNumber()
       const infos = await infoHolder.goongeryInfo(currentRoundNumber)
@@ -88,58 +87,31 @@ describe("Goongery", async function () {
       expect(currentRoundNumber).to.be.eq(1)
       expect(winningNumbers).to.be.eql(_winningNumbers)
       expect(allocation).to.be.eql(_allocation)
-      expect(infos.openingTimestamp).to.be.eq(_openingTimestamp)
-      expect(infos.closingTimestamp).to.be.eq(_closingTimestamp)
+      expect(infos.openingTimestamp).to.be.eq(openingTimestamp)
+      expect(infos.closingTimestamp).to.be.eq(closingTimestamp)
       expect(infos.status).to.be.eq(0)
       expect(infos.totalGoongPrize).to.be.eq(0)
       expect(infos.goongPerTicket).to.be.eq(goongPerTicket)
     })
 
     it("should add previous round rewards when there're at least one allocation pool that no one wins", async () => {
-      const timestamp = await currentBlockTimestamp()
-      const _allocation = ["6000", "2000", "1000"]
-      const _openingTimestamp = timestamp + 200
-      const _closingTimestamp = timestamp + 4000
-
-      await goongery
-        .createNewRound(
-          _allocation,
-          goongPerTicket,
-          burnPercentage,
-          maxNumber,
-          _openingTimestamp,
-          _closingTimestamp
-        )
-        .then((tx) => tx.wait())
-
+      const {
+        goongPerTicket,
+        burnPercentage,
+        openingTimestamp,
+        closingTimestamp
+      } = await createNewRound(goongery)
       await approveTokens([goong], goongery.address)
 
-      await mine(_openingTimestamp - timestamp)
-
+      await enterBuyingPhase(openingTimestamp)
       await goongery.buy(50, [0, 0, 0], 0).then((tx) => tx.wait())
 
-      await mine(_closingTimestamp - _openingTimestamp + 1)
-      await goongery.drawWinningNumbers().then((tx) => tx.wait())
-      const [owner] = await ethers.getSigners()
-      await goongery.setGoongeryRandomGenerator(owner.address)
-      const requestId = await goongery.requestId()
-      const randomness = 10000
-      await goongery
-        .drawWinningNumbersCallback(1, requestId, randomness)
-        .then((tx) => tx.wait())
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
 
-      await goongery
-        .createNewRound(
-          _allocation,
-          goongPerTicket,
-          burnPercentage,
-          maxNumber,
-          _closingTimestamp + 100,
-          _closingTimestamp + 4000
-        )
-        .then((tx) => tx.wait())
-
+      await createNewRound(goongery)
       const infos = await infoHolder.getGoongeryInfo(2)
+
       const expectedTotalGoongPrize = goongPerTicket
         .mul(50)
         .mul(10000 - burnPercentage)
@@ -147,44 +119,213 @@ describe("Goongery", async function () {
       expect(infos.totalGoongPrize).to.be.eq(expectedTotalGoongPrize)
     })
 
-    it("should reverted: `goongPerTicket` must be greater than MIN_GOONG_PER_TICKET given goongPerTicket = 0.1", async () => {})
+    it("should reverted: `goongPerTicket must be greater than MIN_GOONG_PER_TICKET` given goongPerTicket = 0.1", async () => {
+      await expect(
+        createNewRound(goongery, {
+          goongPerTicket: ethers.utils.parseEther("0.1")
+        })
+      ).to.be.revertedWith(
+        "goongPerTicket must be greater than MIN_GOONG_PER_TICKET"
+      )
+    })
+
+    it("should reverted: `openingTimestamp cannot be the past` given the openingTimestamp is before block timestamp", async () => {
+      const timestamp = await currentBlockTimestamp()
+      await expect(
+        createNewRound(goongery, { openingTimestamp: timestamp - 1 })
+      ).to.be.revertedWith("openingTimestamp cannot be the past")
+    })
+
+    it("should reverted: `exceed max burn percentage` given the burn percentage is greater than the max burn percentage", async () => {
+      await expect(
+        createNewRound(goongery, { burnPercentage: 2100 })
+      ).to.be.revertedWith("exceed max burn percentage")
+    })
+
+    it("should reverted: `max number must be greater than 9` give the max number is less than 9", async function () {
+      await expect(
+        createNewRound(goongery, { maxNumber: 8 })
+      ).to.be.revertedWith("max number must be greater than 9")
+    })
+
+    it("should reverted: `closingTimestamp must be greater than openingTimestamp + MIN_BUY_TICKET_TIME` given the closingTimestamp <=  _openingTimestamp + MIN_BUY_TICKET_TIME", async function () {
+      const timestamp = await currentBlockTimestamp()
+      await expect(
+        createNewRound(goongery, {
+          openingTimestamp: timestamp + 2,
+          closingTimestamp: timestamp + 3
+        })
+      ).to.be.revertedWith(
+        "closingTimestamp must be greater than openingTimestamp + MIN_BUY_TICKET_TIME"
+      )
+
+      await expect(
+        createNewRound(goongery, {
+          openingTimestamp: timestamp + 4,
+          closingTimestamp: timestamp + 1800
+        })
+      ).to.be.revertedWith(
+        "closingTimestamp must be greater than openingTimestamp + MIN_BUY_TICKET_TIME"
+      )
+    })
+
+    it("should reverted: `previous round must be completed` given the closingTimestamp from last round is greater than current block timestamp", async function () {
+      await createNewRound(goongery)
+
+      // Still not finish the round
+      mine(1800)
+
+      await expect(createNewRound(goongery)).to.be.revertedWith(
+        "previous round must be completed"
+      )
+    })
+
+    it("should reverted: `total allocation must be equal to 10000 - burn percentage` given the total allocations plus burn percentage is not equal to 10000", async function () {
+      await expect(
+        createNewRound(goongery, { allocation: [1000, 1000, 1000] })
+      ).to.be.revertedWith(
+        "total allocation must be equal to 10000 - burn percentage"
+      )
+      await expect(
+        createNewRound(goongery, { allocation: [1000, 2000, 7000] })
+      ).to.be.revertedWith(
+        "total allocation must be equal to 10000 - burn percentage"
+      )
+      await expect(
+        createNewRound(goongery, {
+          allocation: [1000, 2000, 6000],
+          burnPercentage: 2000
+        })
+      ).to.be.revertedWith(
+        "total allocation must be equal to 10000 - burn percentage"
+      )
+    })
   })
 
   describe("buy", async function () {
-    it("should add totalGoongPrize by 200 when bought 2 tickets with 100 goong per ticket", async function () {
+    it("should set goongeryInfo correctly when bought 2 tickets with 100 goong per ticket", async function () {
       const [owner] = await ethers.getSigners()
-      const timestamp = await currentBlockTimestamp()
-      const _allocation = [6000, 2000, 1000]
-      const _openingTimestamp = timestamp + 200
-      const _closingTimestamp = timestamp + 4000
-      await goongery.createNewRound(
-        _allocation,
-        goongPerTicket,
-        burnPercentage,
-        maxNumber,
-        _openingTimestamp,
-        _closingTimestamp
-      )
+      const { goongPerTicket, openingTimestamp, closingTimestamp } =
+        await createNewRound(goongery)
 
       const numberOfTickets = 2
       const numbers = [1, 2, 3]
       const buyOption = 0
 
-      await mine(300)
       await approveTokens([goong], goongery.address)
+      const initialBalance = await goong.balanceOf(owner.address)
 
+      await enterBuyingPhase(openingTimestamp)
       await goongery
         .buy(numberOfTickets, numbers, buyOption)
         .then((tx) => tx.wait())
+
       const infos = await infoHolder.goongeryInfo(1)
       expect(infos.totalGoongPrize).to.be.eq(
         goongPerTicket.mul(numberOfTickets)
       )
       const tokenId = await goongery.userInfo(owner.address, 0)
-      expect(tokenId).to.be.eq(1)
       const amount = await nft.getAmount(tokenId)
+      const tokenIds = await infoHolder.getUserTokenIdsByRound(owner.address, 1)
+      const latestBalance = await goong.balanceOf(owner.address)
+
+      expect(tokenId).to.be.eq(1)
       expect(amount).to.be.eq(goongPerTicket.mul(numberOfTickets))
       expect(infos.status).to.be.eq(1)
+      expect(infos.burnAmount).to.be.eq(amount.div(10))
+      expect(tokenIds).to.be.eql([tokenId])
+      expect(initialBalance.sub(latestBalance)).to.be.eq(amount)
+    })
+
+    it("should set token ids correctly given user bought all types of tickets", async function () {
+      const { openingTimestamp } = await createNewRound(goongery)
+
+      await approveTokens([goong], goongery.address)
+      await enterBuyingPhase(openingTimestamp)
+
+      await goongery.buy(10, [1, 2, 3], 0)
+      await goongery.buy(10, [3, 8, 6], 1)
+      await goongery.buy(10, [2, 3, 0], 2)
+
+      const [owner] = await ethers.getSigners()
+      const tokenIds = await infoHolder
+        .getUserTokenIdsByRound(owner.address, 1)
+        .then((ids) => ids.map((id) => id.toNumber()))
+
+      expect(tokenIds).to.be.eql([1, 2, 3])
+      expect(await nft.getBuyOption(tokenIds[0])).to.be.eq(0)
+      expect(await nft.getBuyOption(tokenIds[1])).to.be.eq(1)
+      expect(await nft.getBuyOption(tokenIds[2])).to.be.eq(2)
+      expect(await nft.getNumbers(tokenIds[0])).to.be.eql([1, 2, 3])
+      expect(await nft.getNumbers(tokenIds[1])).to.be.eql([3, 8, 6])
+      expect(await nft.getNumbers(tokenIds[2])).to.be.eql([2, 3, 255])
+    })
+
+    it("should set status from `NotStarted` to `Open` when bought after opening timestamp", async function () {
+      const timestamp = await currentBlockTimestamp()
+      const { openingTimestamp } = await createNewRound(goongery, {
+        openingTimestamp: timestamp + 100
+      })
+
+      await approveTokens([goong], goongery.address)
+      await enterBuyingPhase(openingTimestamp)
+
+      expect(
+        await infoHolder.getGoongeryInfo(1).then((info) => info.status)
+      ).to.be.eq(0)
+
+      await goongery.buy(10, [1, 2, 3], 0).then((tx) => tx.wait())
+
+      expect(
+        await infoHolder.getGoongeryInfo(1).then((info) => info.status)
+      ).to.be.eq(1)
+    })
+
+    it("should reverted: `block timestamp must be greater than opening timestamp` given bought before opening timestamp", async function () {
+      const timestamp = await currentBlockTimestamp()
+      await createNewRound(goongery, {
+        openingTimestamp: timestamp + 100
+      })
+      await approveTokens([goong], goongery.address)
+      await expect(
+        goongery.buy(10, [1, 2, 3], 0).then((tx) => tx.wait())
+      ).to.be.revertedWith(
+        "block timestamp must be greater than opening timestamp"
+      )
+    })
+
+    it("should reverted: `block timestamp must be less than closing timestamp` given bought after closing timestamp", async function () {
+      await createNewRound(goongery)
+      await approveTokens([goong], goongery.address)
+      await mine(4200)
+      await expect(
+        goongery.buy(10, [1, 2, 3], 0).then((tx) => tx.wait())
+      ).to.be.revertedWith(
+        "block timestamp must be less than closing timestamp"
+      )
+    })
+
+    it("should reverted: `exceed max number allowed` when bought one of three numbers is greater than max number for given round and buy option is ExactThreeDigits", async function () {
+      const { openingTimestamp } = await createNewRound(goongery)
+      await approveTokens([goong], goongery.address)
+      await enterBuyingPhase(openingTimestamp)
+      await expect(goongery.buy(10, [1, 2, 10], 0)).to.be.revertedWith(
+        `exceed max number allowed`
+      )
+      await expect(goongery.buy(10, [1, 2, 10], 1)).to.be.revertedWith(
+        `exceed max number allowed`
+      )
+    })
+
+    it("should reverted: `exceed max number allowed` when bought one of first two numbers is greater than max number for given round and buy option is LastTwoDigits", async function () {
+      const { openingTimestamp } = await createNewRound(goongery)
+      await approveTokens([goong], goongery.address)
+      await enterBuyingPhase(openingTimestamp)
+      // should not revert
+      await goongery.buy(10, [1, 2, 20], 2)
+      await expect(goongery.buy(10, [1, 11, 20], 2)).to.be.revertedWith(
+        "exceed max number allowed"
+      )
     })
   })
 

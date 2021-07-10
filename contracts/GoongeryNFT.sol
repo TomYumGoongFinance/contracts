@@ -81,10 +81,6 @@ contract GoongeryNFT is ERC721, Ownable {
         }
     }
 
-    function burn(uint256 tokenId) external onlyOwner {
-        _burn(tokenId);
-    }
-
     function getClaimStatus(uint256 tokenId) external view returns (bool) {
         return claimInfo[tokenId];
     }

@@ -103,21 +103,21 @@ contract Goongery is Ownable, Initializable {
         );
         require(
             _openingTimestamp > block.timestamp,
-            "openingTimstamp cannot be the past"
+            "openingTimestamp cannot be the past"
         );
         require(
             _burnPercentage <= MAX_BURN_PERCENTAGE,
-            "Exceed max burn percentage"
+            "exceed max burn percentage"
         );
         require(
             _maxNumber >= MIN_MAX_NUMBER,
-            "maxNumber must be greater than 9"
+            "max number must be greater than 9"
         );
 
         GoongeryInfo memory goongeryInfo = getCurrentGoongeryInfo();
         require(
             goongeryInfo.closingTimestamp <= block.timestamp,
-            "Previous round must be completed"
+            "previous round must be completed"
         );
         require(
             _closingTimestamp > _openingTimestamp + MIN_BUY_TICKET_TIME,
@@ -131,7 +131,7 @@ contract Goongery is Ownable, Initializable {
 
         require(
             totalAllocation == 10000 - _burnPercentage,
-            "total allocation must be equal to 10000 - burnPercentage"
+            "total allocation must be equal to 10000 - burn percentage"
         );
 
         Status lotteryStatus;
@@ -180,11 +180,11 @@ contract Goongery is Ownable, Initializable {
         GoongeryInfo memory goongeryInfo = getCurrentGoongeryInfo();
         require(
             block.timestamp >= goongeryInfo.openingTimestamp,
-            "block timestamp < openingTimestamp"
+            "block timestamp must be greater than opening timestamp"
         );
         require(
             block.timestamp < goongeryInfo.closingTimestamp,
-            "block timestamp >= closingTimestamp"
+            "block timestamp must be less than closing timestamp"
         );
 
         uint8 upperBound = 3;
@@ -324,12 +324,12 @@ contract Goongery is Ownable, Initializable {
         );
 
         uint256 reward;
+        nft.multiClaimReward(_nftIds);
         for (uint256 i = 0; i < _nftIds.length; i++) {
             uint256 _nftId = _nftIds[i];
             require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
             require(!nft.getClaimStatus(_nftId), "Nft is already claimed");
 
-            nft.claimReward(_nftId);
             GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
             reward = reward.add(
                 goongeryInfoHolder.calculateReward(
