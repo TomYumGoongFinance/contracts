@@ -43,7 +43,7 @@ async function enterDrawingPhase(openingTimestamp, closingTimestamp) {
   await mine(closingTimestamp - openingTimestamp + 1)
 }
 
-async function drawWinningNumbers(goongery, args = { }) {
+async function drawWinningNumbers(goongery, args = {}) {
   await goongery.drawWinningNumbers().then((tx) => tx.wait())
   const [owner] = await ethers.getSigners()
   await goongery
@@ -57,11 +57,25 @@ async function drawWinningNumbers(goongery, args = { }) {
     .then((tx) => tx.wait())
 }
 
+function calculateWinningNumbers(randomness, maxNumber) {
+  let _winningNumbers = new Array(3)
+  for (let i = 0; i < 3; i++) {
+    const hash = ethers.utils.solidityKeccak256(
+      ["uint256", "uint256"],
+      [randomness, i]
+    )
+    const hashNumber = ethers.BigNumber.from(hash)
+    _winningNumbers[i] = hashNumber.mod(maxNumber).toNumber()
+  }
+  return _winningNumbers
+}
+
 // function buy
 
 module.exports = {
   createNewRound,
   enterBuyingPhase,
   enterDrawingPhase,
-  drawWinningNumbers
+  drawWinningNumbers,
+  calculateWinningNumbers
 }

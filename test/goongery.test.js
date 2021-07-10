@@ -6,7 +6,8 @@ const {
   createNewRound,
   enterBuyingPhase,
   drawWinningNumbers,
-  enterDrawingPhase
+  enterDrawingPhase,
+  calculateWinningNumbers
 } = require("./libs/goongery")
 const { approveTokens } = require("./libs/token")
 
@@ -331,32 +332,21 @@ describe("Goongery", async function () {
 
   describe("drawWinningNumbers", async function () {
     it("should change status to `Closed` given valid params", async function () {
-      const timestamp = await currentBlockTimestamp()
-      const _allocation = [6000, 2000, 1000]
-      const _openingTimestamp = timestamp + 200
-      const _closingTimestamp = timestamp + 4000
-      await goongery.createNewRound(
-        _allocation,
-        goongPerTicket,
-        burnPercentage,
-        maxNumber,
-        _openingTimestamp,
-        _closingTimestamp
+      const { openingTimestamp, closingTimestamp } = await createNewRound(
+        goongery
       )
 
       const numberOfTickets = 2
       const numbers = [1, 2, 3]
       const buyOption = 0
 
-      await mine(300)
       await approveTokens([goong], goongery.address)
-
+      await enterBuyingPhase(openingTimestamp)
       await goongery
         .buy(numberOfTickets, numbers, buyOption)
         .then((tx) => tx.wait())
 
-      await mine(4000)
-
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
       await goongery.drawWinningNumbers().then((tx) => tx.wait())
       const info = await infoHolder.goongeryInfo(1)
       expect(info.status).to.be.eq(2)
@@ -365,103 +355,50 @@ describe("Goongery", async function () {
 
   describe("drawWinningNumbersCallback", async function () {
     it("should set winner numbers correctly given valid params", async function () {
-      const [owner] = await ethers.getSigners()
-
-      const timestamp = await currentBlockTimestamp()
-      const _allocation = [6000, 2000, 1000]
-      const _openingTimestamp = timestamp + 200
-      const _closingTimestamp = timestamp + 4000
-      await goongery.createNewRound(
-        _allocation,
-        goongPerTicket,
-        burnPercentage,
-        maxNumber,
-        _openingTimestamp,
-        _closingTimestamp
-      )
+      const { openingTimestamp, closingTimestamp, maxNumber } =
+        await createNewRound(goongery)
 
       const numberOfTickets = 2
       const numbers = [1, 2, 3]
       const buyOption = 0
 
-      await mine(300)
+      await enterBuyingPhase(openingTimestamp)
       await approveTokens([goong], goongery.address)
 
       await goongery
         .buy(numberOfTickets, numbers, buyOption)
         .then((tx) => tx.wait())
 
-      await mine(4000)
-
-      await goongery.drawWinningNumbers().then((tx) => tx.wait())
-
-      await goongery.setGoongeryRandomGenerator(owner.address)
-      const requestId = await goongery.requestId()
-      const randomness = ethers.BigNumber.from(ethers.utils.randomBytes(32))
-      await goongery
-        .drawWinningNumbersCallback(1, requestId, randomness)
-        .then((tx) => tx.wait())
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      const randomness = 10000
+      await drawWinningNumbers(goongery, { randomness })
 
       const winningNumbers = await infoHolder.getWinningNumbers(1)
-      let _winningNumbers = new Array(3)
-      for (let i = 0; i < 3; i++) {
-        const hash = ethers.utils.solidityKeccak256(
-          ["uint256", "uint256"],
-          [randomness, i]
-        )
-        const hashNumber = ethers.BigNumber.from(hash)
-        _winningNumbers[i] = hashNumber.mod(maxNumber).toNumber()
-      }
-      expect(winningNumbers).to.be.eql(_winningNumbers)
       const info = await infoHolder.goongeryInfo(1)
+      expect(winningNumbers).to.be.eql(
+        calculateWinningNumbers(randomness, maxNumber)
+      )
       expect(info.status).to.be.eq(3)
     })
   })
 
   describe("claimReward", async function () {
     let numberOfTickets = 1
+    let openingTimestamp, closingTimestamp, maxNumber
     const randomness = ethers.BigNumber.from(ethers.utils.randomBytes(32))
     let _winningNumbers
     let owner
     beforeEach(async () => {
       const signers = await ethers.getSigners()
       owner = signers[0]
-      const timestamp = await currentBlockTimestamp()
-      const _allocation = [6000, 2000, 1000]
-      const _openingTimestamp = timestamp + 200
-      const _closingTimestamp = timestamp + 4000
-      await goongery.createNewRound(
-        _allocation,
-        goongPerTicket,
-        burnPercentage,
-        maxNumber,
-        _openingTimestamp,
-        _closingTimestamp
-      )
-
-      await mine(300)
+      const args = await createNewRound(goongery)
+      openingTimestamp = args.openingTimestamp
+      closingTimestamp = args.closingTimestamp
+      maxNumber = args.maxNumber
       await approveTokens([goong], goongery.address)
-
-      _winningNumbers = new Array(3)
-      for (let i = 0; i < 3; i++) {
-        const hash = ethers.utils.solidityKeccak256(
-          ["uint256", "uint256"],
-          [randomness, i]
-        )
-        const hashNumber = ethers.BigNumber.from(hash)
-        _winningNumbers[i] = hashNumber.mod(10).toNumber()
-      }
+      await enterBuyingPhase(openingTimestamp)
+      _winningNumbers = calculateWinningNumbers(randomness, maxNumber)
     })
-
-    async function drawWinningNumbers() {
-      await mine(4000)
-      await goongery.drawWinningNumbers().then((tx) => tx.wait())
-      await goongery.setGoongeryRandomGenerator(owner.address)
-      const requestId = await goongery.requestId()
-      await goongery
-        .drawWinningNumbersCallback(1, requestId, randomness)
-        .then((tx) => tx.wait())
-    }
 
     it("should receive 60% of total goong, given non-permutable 3 digits ticket and all tickets win", async function () {
       const buyOption = 0
@@ -476,7 +413,8 @@ describe("Goongery", async function () {
 
       const nftId = await goongery.userInfo(owner.address, 0)
 
-      await drawWinningNumbers()
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
 
       const reward = totalTicketCost.mul(60).div(100)
 
@@ -514,7 +452,8 @@ describe("Goongery", async function () {
 
       const nftId = await goongery.userInfo(owner.address, 0)
 
-      await drawWinningNumbers()
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
 
       const ownerReward = totalOwnerTicketCost
         .add(totalAliceTicketCost)
@@ -543,7 +482,8 @@ describe("Goongery", async function () {
 
       const nftId = await goongery.userInfo(owner.address, 0)
 
-      await drawWinningNumbers()
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
 
       const reward = totalTicketCost.mul(20).div(100)
 
@@ -578,7 +518,8 @@ describe("Goongery", async function () {
           .then((tx) => tx.wait())
       }
 
-      await drawWinningNumbers()
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
 
       const reward = totalTicketCost.mul(20).div(100)
 
@@ -610,7 +551,8 @@ describe("Goongery", async function () {
 
       const nftId = await goongery.userInfo(owner.address, 0)
 
-      await drawWinningNumbers()
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
 
       const reward = totalTicketCost.mul(10).div(100)
 
@@ -647,7 +589,8 @@ describe("Goongery", async function () {
 
       const nftId = await goongery.userInfo(owner.address, 0)
 
-      await drawWinningNumbers()
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
 
       const totalGoongPrize = await infoHolder
         .getGoongeryInfo(1)

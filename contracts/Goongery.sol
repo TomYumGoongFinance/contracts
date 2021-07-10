@@ -255,11 +255,11 @@ contract Goongery is Ownable, Initializable {
     }
 
     function drawWinningNumbers() external onlyGoongeryManager {
-        goongeryInfoHolder.drawWinningNumbers(roundNumber);
         require(
             address(goongeryRandomGenerator) != address(0),
             "Required RandomGenerator to be set"
         );
+        goongeryInfoHolder.drawWinningNumbers(roundNumber);
         requestId = goongeryRandomGenerator.getRandomNumber(roundNumber);
     }
 
