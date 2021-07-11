@@ -165,13 +165,6 @@ contract Goongery is Ownable, Initializable {
         goongeryInfoHolder.setGoongeryInfo(roundNumber, info);
     }
 
-    /**
-     * @dev Supported 3 types of ticket:
-     * 1. last two digits numbers
-     * 2. three digits with permutable option
-     * 3. exact three digits
-     * If buyOption is `LastTwoNumbers`, Only _numbers[0] and _numbers[1] will be used (ignore _numbers[2]).
-     */
     function buy(
         uint256 _numberOfTickets,
         uint8[3] memory _numbers,

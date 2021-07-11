@@ -475,7 +475,11 @@ describe("Goongery", async function () {
         ethers.BigNumber.from(numberOfTickets).mul(goongPerTicket)
 
       await goongery
-        .buy(numberOfTickets, _winningNumbers, buyOption)
+        .buy(
+          numberOfTickets,
+          [_winningNumbers[0], _winningNumbers[2], _winningNumbers[1]],
+          buyOption
+        )
         .then((tx) => tx.wait())
 
       const nftId = await goongery.userInfo(owner.address, 0)
@@ -492,10 +496,9 @@ describe("Goongery", async function () {
       )
     })
 
-    it("should receive 20% of total goong, given the number bought is permutably matched with winning numbers", async function () {
+    it("should receive 1/6 of 20% of total goong each, given 6 addresses bought numbers which permutably matched with the winning numbers", async function () {
       const buyOption = 1
-
-      const initialBalance = await goong.balanceOf(owner.address)
+      const signers = await ethers.getSigners()
 
       const permutablyNumbers = [
         [_winningNumbers[0], _winningNumbers[1], _winningNumbers[2]],
@@ -503,15 +506,20 @@ describe("Goongery", async function () {
         [_winningNumbers[1], _winningNumbers[0], _winningNumbers[2]],
         [_winningNumbers[1], _winningNumbers[2], _winningNumbers[0]],
         [_winningNumbers[2], _winningNumbers[0], _winningNumbers[1]],
-        [_winningNumbers[2], _winningNumbers[1], _winningNumbers[0]]
+        [_winningNumbers[2], _winningNumbers[1], _winningNumbers[0]],
+
+        // doesn't match winning numbers
+        [_winningNumbers[2], _winningNumbers[2], _winningNumbers[2]]
       ]
 
-      const totalTicketCost = ethers.BigNumber.from(
-        numberOfTickets * permutablyNumbers.length
-      ).mul(goongPerTicket)
+      const ticketCost =
+        ethers.BigNumber.from(numberOfTickets).mul(goongPerTicket)
 
       for (let i = 0; i < permutablyNumbers.length; i++) {
+        await goong.transfer(signers[i + 1].address, goongPerTicket)
+        await approveTokens([goong.connect(signers[i + 1])], goongery.address)
         await goongery
+          .connect(signers[i + 1])
           .buy(numberOfTickets, permutablyNumbers[i], buyOption)
           .then((tx) => tx.wait())
       }
@@ -519,17 +527,29 @@ describe("Goongery", async function () {
       await enterDrawingPhase(openingTimestamp, closingTimestamp)
       await drawWinningNumbers(goongery, { randomness })
 
-      const reward = totalTicketCost.mul(20).div(100)
+      const reward = ticketCost
+        .mul(permutablyNumbers.length)
+        .mul(20)
+        .div(100)
+        .div(permutablyNumbers.length - 1)
 
       for (let i = 0; i < permutablyNumbers.length; i++) {
-        const nftId = await goongery.userInfo(owner.address, i)
-        await goongery.claimReward(1, nftId).then((tx) => tx.wait())
-      }
+        const nftId = await goongery.userInfo(signers[i + 1].address, 0)
+        await goongery
+          .connect(signers[i + 1])
+          .claimReward(1, nftId)
+          .then((tx) => tx.wait())
 
-      const balanceAfterClaimedReward = await goong.balanceOf(owner.address)
-      expect(initialBalance.sub(totalTicketCost).add(reward)).to.be.eq(
-        balanceAfterClaimedReward
-      )
+        const balanceAfterClaimedReward = await goong.balanceOf(
+          signers[i + 1].address
+        )
+        if (i < permutablyNumbers.length - 1) {
+          expect(balanceAfterClaimedReward).to.be.eq(reward)
+        } else {
+          // numbers bought does't match
+          expect(balanceAfterClaimedReward).to.be.eq(0)
+        }
+      }
     })
 
     it("should receive 10% of total goong, given there's only one ticket won last 2 digits prize", async function () {
@@ -599,6 +619,47 @@ describe("Goongery", async function () {
       await goongery.claimReward(1, nftId).then((tx) => tx.wait())
       const balanceAfterClaimedReward = await goong.balanceOf(owner.address)
       expect(initialBalance.sub(totalTicketCost).add(reward)).to.be.eq(
+        balanceAfterClaimedReward
+      )
+    })
+
+    it("should receive 0 reward, given none of tickets bought matched and buy option is LastTwoDigits", async function () {
+      const buyOption = 2
+
+      const initialBalance = await goong.balanceOf(owner.address)
+      let totalTicketCost = 0
+
+      const txs = []
+      for (let i = 0; i < 100; i++) {
+        const numbers = [255, parseInt(i / 10) % 10, i % 10]
+        const matchedCount = _winningNumbers
+          .slice(1)
+          .filter((num, i) => numbers.indexOf(num) == i + 1).length
+        if (matchedCount < 2) {
+          const tx = goongery
+            .buy(numberOfTickets, numbers, buyOption)
+            .then((tx) => tx.wait())
+          txs.push(tx)
+          totalTicketCost = ethers.BigNumber.from(numberOfTickets)
+            .mul(goongPerTicket)
+            .add(totalTicketCost)
+        }
+      }
+      await Promise.all(txs)
+
+      const nftIds = await infoHolder.getUserTokenIdsByRound(owner.address, 1)
+
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery, { randomness })
+
+      const claimTxs = []
+      for (id of nftIds) {
+        claimTxs.push(goongery.claimReward(1, id).then((tx) => tx.wait()))
+      }
+      await Promise.all(claimTxs)
+
+      const balanceAfterClaimedReward = await goong.balanceOf(owner.address)
+      expect(initialBalance.sub(totalTicketCost)).to.be.eq(
         balanceAfterClaimedReward
       )
     })
