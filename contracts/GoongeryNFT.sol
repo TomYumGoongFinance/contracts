@@ -41,7 +41,7 @@ contract GoongeryNFT is ERC721, Ownable {
             googeryInfo[itemId] = _lotteryNumbers;
         } else if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
             googeryInfo[itemId] = _lotteryNumbers;
-            googeryInfo[itemId][2] = ~uint8(0);
+            googeryInfo[itemId][0] = ~uint8(0);
         }
 
         return itemId;

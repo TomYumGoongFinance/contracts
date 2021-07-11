@@ -15,7 +15,7 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
     using SafeMath for uint256;
     using SafeMath for uint8;
 
-    IGoongery goongery;
+    IGoongery public goongery;
     GoongeryNFT public nft;
 
     // roundNumber => GoongeryInfo
@@ -75,8 +75,19 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         }
 
         uint8[3] memory _numbers = getNumbersForRewardCalculation(_nftId);
-
         uint64 numberId = GoongeryHelper.calculateGoongeryNumberId(_numbers);
+
+        uint8[3] memory _winningNumbers = getNumbersForRewardCalculation(
+            goongeryInfo[_roundNumber].winningNumbers,
+            _buyOption
+        );
+        uint64 winningNumberId = GoongeryHelper.calculateGoongeryNumberId(
+            _winningNumbers
+        );
+
+        if (numberId != winningNumberId) {
+            return 0;
+        }
 
         uint256 totalGoongForNumbers = getUserBuyAmountSum(
             _roundNumber,
@@ -98,19 +109,26 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
     }
 
     function getNumbersForRewardCalculation(uint256 _nftId)
-        private
+        public
         view
         returns (uint8[3] memory)
     {
         uint8[3] memory buyNumbers = nft.getNumbers(_nftId);
         GoongeryOption.Buy buyOption = nft.getBuyOption(_nftId);
-        if (buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
-            return GoongeryHelper.getLeastPermutableNumber(buyNumbers);
-        } else if (buyOption == GoongeryOption.Buy.LastTwoDigits) {
-            buyNumbers[2] = ~uint8(0);
+        return getNumbersForRewardCalculation(buyNumbers, buyOption);
+    }
+
+    function getNumbersForRewardCalculation(
+        uint8[3] memory _numbers,
+        GoongeryOption.Buy _buyOption
+    ) public pure returns (uint8[3] memory) {
+        if (_buyOption == GoongeryOption.Buy.PermutableThreeDigits) {
+            return GoongeryHelper.getLeastPermutableNumber(_numbers);
+        } else if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
+            _numbers[0] = ~uint8(0);
         }
 
-        return buyNumbers;
+        return _numbers;
     }
 
     function setGoongeryInfoBurnAmount(
@@ -275,7 +293,7 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
                 numbersForId
             );
         } else if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
-            numbersForId[2] = ~uint8(0);
+            numbersForId[0] = ~uint8(0);
         }
 
         uint64 numberId = GoongeryHelper.calculateGoongeryNumberId(

@@ -134,6 +134,8 @@ describe("GoongeryInfoHolder", async function () {
       const roundNumber = 1
       const boughtGoongAmount1 = 200
       const boughtGoongAmount2 = 9800
+
+      // 1
       await nft.create(
         owner.address,
         winningNumbers,
@@ -147,6 +149,8 @@ describe("GoongeryInfoHolder", async function () {
         boughtGoongAmount1,
         0
       )
+
+      // 2
       await nft.create(
         owner.address,
         [0, 1, 2],
@@ -160,6 +164,7 @@ describe("GoongeryInfoHolder", async function () {
         boughtGoongAmount2,
         0
       )
+
       await infoHolder.addGoongeryInfoTotalGoongPrize(
         roundNumber,
         boughtGoongAmount1 + boughtGoongAmount2
@@ -173,7 +178,7 @@ describe("GoongeryInfoHolder", async function () {
         maxNumber
       )
 
-      const winNftId = 2
+      const winNftId = 1
       const reward = await infoHolder.calculateReward(winNftId, roundNumber, 0)
       expect(reward).to.be.eq(4000)
     })
@@ -186,6 +191,8 @@ describe("GoongeryInfoHolder", async function () {
       const buyOption = 1
       const boughtGoongAmount1 = 200
       const boughtGoongAmount2 = 9800
+
+      // 1
       await nft.create(
         owner.address,
         winningNumbers,
@@ -199,6 +206,8 @@ describe("GoongeryInfoHolder", async function () {
         boughtGoongAmount1,
         buyOption
       )
+
+      // 2
       await nft.create(
         owner.address,
         [0, 1, 2],
@@ -225,7 +234,7 @@ describe("GoongeryInfoHolder", async function () {
         maxNumber
       )
 
-      const winNftId = 2
+      const winNftId = 1
       const reward = await infoHolder.calculateReward(
         winNftId,
         roundNumber,
@@ -234,7 +243,7 @@ describe("GoongeryInfoHolder", async function () {
       expect(reward).to.be.eq(3000)
     })
 
-    it.only("should return 1000 given total bought 10000 and buy option is last two digits", async function () {
+    it("should return 1000 given total bought 10000 and buy option is last two digits", async function () {
       const [owner] = await ethers.getSigners()
       const maxNumber = 9
       const winningNumbers = calculateWinningNumbers(randomness, maxNumber)
@@ -246,14 +255,14 @@ describe("GoongeryInfoHolder", async function () {
       // 1
       await nft.create(
         owner.address,
-        [winningNumbers[1], winningNumbers[2], 255],
+        winningNumbers,
         boughtGoongAmount1,
         roundNumber,
         buyOption
       )
       await infoHolder.addUserBuyAmountSum(
         roundNumber,
-        [winningNumbers[1], winningNumbers[2], 255],
+        winningNumbers,
         boughtGoongAmount1,
         buyOption
       )

@@ -257,7 +257,7 @@ describe("Goongery", async function () {
       expect(await nft.getBuyOption(tokenIds[2])).to.be.eq(2)
       expect(await nft.getNumbers(tokenIds[0])).to.be.eql([1, 2, 3])
       expect(await nft.getNumbers(tokenIds[1])).to.be.eql([3, 8, 6])
-      expect(await nft.getNumbers(tokenIds[2])).to.be.eql([2, 3, 255])
+      expect(await nft.getNumbers(tokenIds[2])).to.be.eql([255, 3, 0])
     })
 
     it("should set status from `NotStarted` to `Open` when bought after opening timestamp", async function () {
@@ -321,8 +321,8 @@ describe("Goongery", async function () {
       await approveTokens([goong], goongery.address)
       await enterBuyingPhase(openingTimestamp)
       // should not revert
-      await goongery.buy(10, [1, 2, 20], 2)
-      await expect(goongery.buy(10, [1, 11, 20], 2)).to.be.revertedWith(
+      await goongery.buy(10, [255, 2, 8], 2)
+      await expect(goongery.buy(10, [255, 2, 11], 2)).to.be.revertedWith(
         "exceed max number allowed"
       )
     })
@@ -398,7 +398,7 @@ describe("Goongery", async function () {
       _winningNumbers = calculateWinningNumbers(randomness, maxNumber)
     })
 
-    it("should receive 60% of total goong, given non-permutable 3 digits ticket and all tickets win", async function () {
+    it("should receive 60% of total goong, given exact 3 digits ticket and all tickets win", async function () {
       const buyOption = 0
 
       const initialBalance = await goong.balanceOf(owner.address)
@@ -412,7 +412,7 @@ describe("Goongery", async function () {
       const nftId = await goongery.userInfo(owner.address, 0)
 
       await enterDrawingPhase(openingTimestamp, closingTimestamp)
-      await drawWinningNumbers(goongery)
+      await drawWinningNumbers(goongery, { randomness })
 
       const reward = totalTicketCost.mul(60).div(100)
 
@@ -451,7 +451,7 @@ describe("Goongery", async function () {
       const nftId = await goongery.userInfo(owner.address, 0)
 
       await enterDrawingPhase(openingTimestamp, closingTimestamp)
-      await drawWinningNumbers(goongery)
+      await drawWinningNumbers(goongery, { randomness })
 
       const ownerReward = totalOwnerTicketCost
         .add(totalAliceTicketCost)
@@ -481,7 +481,7 @@ describe("Goongery", async function () {
       const nftId = await goongery.userInfo(owner.address, 0)
 
       await enterDrawingPhase(openingTimestamp, closingTimestamp)
-      await drawWinningNumbers(goongery)
+      await drawWinningNumbers(goongery, { randomness })
 
       const reward = totalTicketCost.mul(20).div(100)
 
@@ -517,7 +517,7 @@ describe("Goongery", async function () {
       }
 
       await enterDrawingPhase(openingTimestamp, closingTimestamp)
-      await drawWinningNumbers(goongery)
+      await drawWinningNumbers(goongery, { randomness })
 
       const reward = totalTicketCost.mul(20).div(100)
 
@@ -542,7 +542,7 @@ describe("Goongery", async function () {
       await goongery
         .buy(
           numberOfTickets,
-          [_winningNumbers[1], _winningNumbers[2], 255],
+          [255, _winningNumbers[1], _winningNumbers[2]],
           buyOption
         )
         .then((tx) => tx.wait())
@@ -550,7 +550,7 @@ describe("Goongery", async function () {
       const nftId = await goongery.userInfo(owner.address, 0)
 
       await enterDrawingPhase(openingTimestamp, closingTimestamp)
-      await drawWinningNumbers(goongery)
+      await drawWinningNumbers(goongery, { randomness })
 
       const reward = totalTicketCost.mul(10).div(100)
 
@@ -572,7 +572,7 @@ describe("Goongery", async function () {
       await goongery
         .buy(
           numberOfTickets,
-          [_winningNumbers[1], _winningNumbers[2], 255],
+          [255, _winningNumbers[1], _winningNumbers[2]],
           buyOption
         )
         .then((tx) => tx.wait())
@@ -580,7 +580,7 @@ describe("Goongery", async function () {
       await goongery
         .buy(
           numberOfTickets,
-          [_winningNumbers[1], _winningNumbers[2], 255],
+          [255, _winningNumbers[1], _winningNumbers[2]],
           buyOption
         )
         .then((tx) => tx.wait())
@@ -588,7 +588,7 @@ describe("Goongery", async function () {
       const nftId = await goongery.userInfo(owner.address, 0)
 
       await enterDrawingPhase(openingTimestamp, closingTimestamp)
-      await drawWinningNumbers(goongery)
+      await drawWinningNumbers(goongery, { randomness })
 
       const totalGoongPrize = await infoHolder
         .getGoongeryInfo(1)

@@ -187,12 +187,12 @@ contract Goongery is Ownable, Initializable {
             "block timestamp must be less than closing timestamp"
         );
 
-        uint8 upperBound = 3;
+        uint8 _numberStartIndex = 0;
         if (_buyOption == GoongeryOption.Buy.LastTwoDigits) {
-            upperBound = 2;
+            _numberStartIndex = 1;
         }
 
-        for (uint8 i = 0; i < upperBound; i++) {
+        for (uint8 i = _numberStartIndex; i < 3; i++) {
             require(
                 _numbers[i] <= goongeryInfo.maxNumber,
                 "exceed max number allowed"
