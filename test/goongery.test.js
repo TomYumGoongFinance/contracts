@@ -14,8 +14,6 @@ const { approveTokens } = require("./libs/token")
 describe("Goongery", async function () {
   const goongPerTicket = ethers.utils.parseEther("100")
   let goong, goongery, nft, helper, infoHolder
-  const burnPercentage = 1000
-  const maxNumber = 9
 
   beforeEach(async () => {
     const [owner] = await ethers.getSigners()
