@@ -34,21 +34,21 @@ contract Goongery is Ownable, Initializable {
     // burn address
     address public constant BURN_ADDRESS =
         0x000000000000000000000000000000000000dEaD;
+    uint256 public constant MAX_PROTOCOL_FEE_PERCENT = 2000;
     // Goong address
     IERC20 public goong;
     // NFT represent googery ticket.
     GoongeryNFT public nft;
     // Address of goongery manager who has the right to call `createNewRound` and `drawWinningNumbers`
     address public goongeryManager;
+    address public protocolFeeAddress;
+    uint256 public protocolFeePercent;
     // Round number
     uint256 public roundNumber = 0;
     // Random generator
     IGoongeryRandomGenerator public goongeryRandomGenerator;
     // Goongery Info holder
     IGoongeryInfoHolder public goongeryInfoHolder;
-
-    // address => [tokenId]
-    mapping(address => uint256[]) public userInfo;
 
     // Random generator for request id
     bytes32 public requestId;
@@ -78,7 +78,8 @@ contract Goongery is Ownable, Initializable {
         address _goong,
         address _goongRandomGenerator,
         address _nft,
-        address _goongeryInfoHolder
+        address _goongeryInfoHolder,
+        address _protocolFeeAddress
     ) external initializer onlyOwner() {
         goong = IERC20(_goong);
         goongeryRandomGenerator = IGoongeryRandomGenerator(
@@ -87,6 +88,8 @@ contract Goongery is Ownable, Initializable {
         nft = GoongeryNFT(_nft);
         goongeryInfoHolder = IGoongeryInfoHolder(_goongeryInfoHolder);
         goongeryManager = msg.sender;
+        protocolFeePercent = 1000;
+        protocolFeeAddress = _protocolFeeAddress;
     }
 
     function createNewRound(
@@ -133,6 +136,9 @@ contract Goongery is Ownable, Initializable {
             totalAllocation == 10000 - _burnPercentage,
             "total allocation must be equal to 10000 - burn percentage"
         );
+
+        // Burn all goong from previous round
+        burn(roundNumber);
 
         Status lotteryStatus;
         if (_openingTimestamp >= block.timestamp) {
@@ -225,7 +231,7 @@ contract Goongery is Ownable, Initializable {
             tokenId
         );
 
-        userInfo[msg.sender].push(tokenId);
+        goongeryInfoHolder.addTokenIdForUserInfo(msg.sender, tokenId);
 
         goongeryInfoHolder.addUserBuyAmountSum(
             roundNumber,
@@ -335,16 +341,14 @@ contract Goongery is Ownable, Initializable {
         goong.safeTransfer(msg.sender, reward);
     }
 
-    function burn(uint256 _roundNumber) external onlyOwner {
+    function burn(uint256 _roundNumber) private {
         GoongeryInfo memory goongeryInfo = goongeryInfoHolder.getGoongeryInfo(
             _roundNumber
         );
-        require(goongeryInfo.status == Status.Completed, "not completed yet");
-        require(goongeryInfo.burnAmount > 0, "already burned");
-
-        goong.transfer(BURN_ADDRESS, goongeryInfo.burnAmount);
-
-        goongeryInfoHolder.setGoongeryInfoBurnAmount(_roundNumber, 0);
+        if (goongeryInfo.burnAmount > 0) {
+            goong.transfer(BURN_ADDRESS, goongeryInfo.burnAmount);
+            goongeryInfoHolder.setGoongeryInfoBurnAmount(_roundNumber, 0);
+        }
     }
 
     // Todo: Remove when done test
@@ -357,5 +361,12 @@ contract Goongery is Ownable, Initializable {
 
     function setGoongeryManager(address _goongeryManager) external onlyOwner {
         goongeryManager = _goongeryManager;
+    }
+
+    function setProtocolFeeAddress(address _protocolFeeAddress)
+        external
+        onlyOwner
+    {
+        protocolFeeAddress = _protocolFeeAddress;
     }
 }

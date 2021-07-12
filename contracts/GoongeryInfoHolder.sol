@@ -17,6 +17,7 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
 
     IGoongery public goongery;
     GoongeryNFT public nft;
+    mapping(address => uint256[]) public userInfo;
 
     // roundNumber => GoongeryInfo
     mapping(uint256 => GoongeryInfo) public goongeryInfo;
@@ -129,6 +130,24 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         }
 
         return _numbers;
+    }
+
+    function addTokenIdForUserInfo(address user, uint256 tokenId)
+        external
+        override
+        onlyGoongery
+    {
+        userInfo[user].push(tokenId);
+    }
+
+    function getTokenIdsForUser(address user)
+        external
+        view
+        override
+        onlyGoongery
+        returns (uint256[] memory)
+    {
+        return userInfo[user];
     }
 
     function setGoongeryInfoBurnAmount(

@@ -308,7 +308,6 @@ describe("GoongeryInfoHolder", async function () {
     it("should return 0 given the ticket does not win", async function () {
       const [owner] = await ethers.getSigners()
       const maxNumber = 9
-      const winningNumbers = calculateWinningNumbers(randomness, maxNumber)
       const roundNumber = 1
       const buyOption = 0
       const boughtGoongAmount1 = 200

@@ -64,6 +64,13 @@ interface IGoongeryInfoHolder {
         uint256 maxNumber
     ) external;
 
+    function addTokenIdForUserInfo(address owner, uint256 tokenId) external;
+
+    function getTokenIdsForUser(address user)
+        external
+        view
+        returns (uint256[] memory);
+
     function setGoongeryInfoBurnAmount(
         uint256 _roundNumber,
         uint256 _burnAmount
