@@ -664,4 +664,70 @@ describe("Goongery", async function () {
       )
     })
   })
+
+  describe("batchClaimReward", async function () {
+    let numberOfTickets = 1
+    let openingTimestamp, closingTimestamp, maxNumber
+    const randomness = ethers.BigNumber.from(ethers.utils.randomBytes(32))
+    let _winningNumbers
+    let owner
+    beforeEach(async () => {
+      const signers = await ethers.getSigners()
+      owner = signers[0]
+      const args = await createNewRound(goongery)
+      openingTimestamp = args.openingTimestamp
+      closingTimestamp = args.closingTimestamp
+      maxNumber = args.maxNumber
+      await approveTokens([goong], goongery.address)
+      await enterBuyingPhase(openingTimestamp)
+      _winningNumbers = calculateWinningNumbers(randomness, maxNumber)
+    })
+
+    it.only("should claim reward from all tickets", async function () {
+      const buyOption = 1
+      const numberOfTickets = 1
+      const roundNumber = 1
+
+      const permutablyNumbers = [
+        [_winningNumbers[0], _winningNumbers[1], _winningNumbers[2]],
+        [_winningNumbers[0], _winningNumbers[2], _winningNumbers[1]],
+        [_winningNumbers[1], _winningNumbers[0], _winningNumbers[2]],
+        [_winningNumbers[1], _winningNumbers[2], _winningNumbers[0]],
+        [_winningNumbers[2], _winningNumbers[0], _winningNumbers[1]],
+        [_winningNumbers[2], _winningNumbers[1], _winningNumbers[0]]
+      ]
+
+      const initialBalance = await goong.balanceOf(owner.address)
+
+      for (let numbers of permutablyNumbers) {
+        await goongery.buy(numberOfTickets, numbers, buyOption)
+      }
+      const buyingCost = goongPerTicket
+        .mul(numberOfTickets)
+        .mul(permutablyNumbers.length)
+
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery, { randomness })
+
+      const nftIds = await infoHolder.getUserTokenIdsByRound(
+        owner.address,
+        roundNumber
+      )
+
+      const reward = buyingCost.mul(20).div(100)
+
+      await goongery
+        .batchClaimReward(roundNumber, nftIds)
+        .then((tx) => tx.wait())
+
+      const balance = await goong.balanceOf(owner.address)
+      expect(initialBalance.sub(buyingCost).add(reward)).to.be.eq(balance)
+    })
+  })
+
+  describe("burn", async function () {
+    it("should burn 10% of total goong prize given `burnPercentage` is 1000", async function () {})
+
+    it("should burn 0 goong given burnPercentage is 0", async function () {})
+  })
 })

@@ -317,12 +317,12 @@ contract Goongery is Ownable, Initializable {
         );
 
         uint256 reward;
-        nft.multiClaimReward(_nftIds);
         for (uint256 i = 0; i < _nftIds.length; i++) {
             uint256 _nftId = _nftIds[i];
             require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
             require(!nft.getClaimStatus(_nftId), "Nft is already claimed");
 
+            nft.claimReward(_nftId);
             GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
             reward = reward.add(
                 goongeryInfoHolder.calculateReward(
