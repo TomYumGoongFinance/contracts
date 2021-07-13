@@ -13,10 +13,12 @@ const { approveTokens } = require("./libs/token")
 
 describe("Goongery", async function () {
   const goongPerTicket = ethers.utils.parseEther("100")
-  let goong, goongery, nft, helper, infoHolder
+  let goong, goongery, nft, helper, infoHolder, protocolFee
 
   beforeEach(async () => {
-    const [owner] = await ethers.getSigners()
+    const signers = await ethers.getSigners()
+    const owner = signers[0]
+    protocolFee = signers[1]
     goong = await deploy("GoongToken")
     link = await deploy("LinkToken")
     nft = await deploy("GoongeryNFT")
@@ -60,7 +62,7 @@ describe("Goongery", async function () {
         goongeryRandomGenerator.address,
         nft.address,
         infoHolder.address,
-        owner.address
+        protocolFee.address
       )
       .then((tx) => tx.wait)
   })
@@ -117,6 +119,49 @@ describe("Goongery", async function () {
         .mul(10000 - burnPercentage)
         .div(10000)
       expect(infos.totalGoongPrize).to.be.eq(expectedTotalGoongPrize)
+    })
+
+    it("should burn reward from previous round ", async function () {
+      const {
+        goongPerTicket,
+        burnPercentage,
+        openingTimestamp,
+        closingTimestamp
+      } = await createNewRound(goongery)
+      const numberOfTickets = 1
+      await approveTokens([goong], goongery.address)
+
+      await enterBuyingPhase(openingTimestamp)
+      await goongery.buy(numberOfTickets, [0, 0, 0], 0).then((tx) => tx.wait())
+
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery)
+
+      await createNewRound(goongery)
+
+      const protocolFeeBalance = await goong.balanceOf(protocolFee.address)
+      const burnBalance = await goong.balanceOf(
+        "0x000000000000000000000000000000000000dEaD"
+      )
+      const protocolFeePercentage = await goongery.protocolFeePercent()
+      expect(protocolFeeBalance).to.be.eq(
+        goongPerTicket
+          .mul(numberOfTickets)
+          .mul(protocolFeePercentage)
+          .mul(burnPercentage)
+          .div(10000)
+          .div(10000)
+      )
+      expect(burnBalance).to.be.eq(
+        goongPerTicket
+          .mul(numberOfTickets)
+          .mul(10000 - protocolFeePercentage)
+          .mul(burnPercentage)
+          .div(10000)
+          .div(10000)
+      )
+      const info = await infoHolder.getGoongeryInfo(1)
+      expect(info.burnAmount).to.be.eq(0)
     })
 
     it("should reverted: `goongPerTicket must be greater than MIN_GOONG_PER_TICKET` given goongPerTicket = 0.1", async () => {
@@ -766,29 +811,5 @@ describe("Goongery", async function () {
         goongery.batchClaimReward(roundNumber, nftIds)
       ).to.be.revertedWith(`Nft is already claimed`)
     })
-  })
-
-  describe("burn", async function () {
-    let numberOfTickets = 1
-    let openingTimestamp, closingTimestamp, maxNumber
-    const randomness = ethers.BigNumber.from(ethers.utils.randomBytes(32))
-    let _winningNumbers
-    let owner, signers
-    beforeEach(async () => {
-      signers = await ethers.getSigners()
-      owner = signers[0]
-      const args = await createNewRound(goongery)
-      openingTimestamp = args.openingTimestamp
-      closingTimestamp = args.closingTimestamp
-      maxNumber = args.maxNumber
-      await approveTokens([goong], goongery.address)
-      await enterBuyingPhase(openingTimestamp)
-      _winningNumbers = calculateWinningNumbers(randomness, maxNumber)
-    })
-    it("should burn 10% of total goong prize given `burnPercentage` is 1000", async function () {
-
-    })
-
-    it("should burn 0 goong given burnPercentage is 0", async function () {})
   })
 })

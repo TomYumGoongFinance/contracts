@@ -346,7 +346,16 @@ contract Goongery is Ownable, Initializable {
             _roundNumber
         );
         if (goongeryInfo.burnAmount > 0) {
-            goong.transfer(BURN_ADDRESS, goongeryInfo.burnAmount);
+            uint256 protocolFeeAmount = goongeryInfo
+            .burnAmount
+            .mul(protocolFeePercent)
+            .div(10000);
+
+            uint256 burnAmount = goongeryInfo.burnAmount.sub(protocolFeeAmount);
+
+            goong.transfer(protocolFeeAddress, protocolFeeAmount);
+            goong.transfer(BURN_ADDRESS, burnAmount);
+
             goongeryInfoHolder.setGoongeryInfoBurnAmount(_roundNumber, 0);
         }
     }
@@ -368,5 +377,16 @@ contract Goongery is Ownable, Initializable {
         onlyOwner
     {
         protocolFeeAddress = _protocolFeeAddress;
+    }
+
+    function setProtocolFeePercent(uint256 _protocolFeePercent)
+        external
+        onlyOwner
+    {
+        require(
+            _protocolFeePercent <= MAX_PROTOCOL_FEE_PERCENT,
+            "exceed max protocol fee percent"
+        );
+        protocolFeePercent = _protocolFeePercent;
     }
 }
