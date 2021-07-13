@@ -544,9 +544,47 @@ describe("GoongeryInfoHolder", async function () {
   })
 
   describe("addUserBuyAmountSum", async function () {
-    it("should increase userBuyAmountSum given existing numbers", async function () {})
+    const roundNumber = 1
+    const allocation = [60, 20, 10]
+    beforeEach(async function () {
+      const timestamp = await currentBlockTimestamp()
+      const info = [
+        0,
+        allocation,
+        goongPerTicket,
+        timestamp + 200,
+        timestamp + 4200,
+        [],
+        [1,2,3],
+        0,
+        0,
+        1000,
+        9
+      ]
+      await infoHolder.setGoongeryInfo(roundNumber, info)
+    })
 
-    it("should set userBuyAmountSum given non-existing numbers", async function () {})
+    it("should increase userBuyAmountSum given existing numbers", async function () {
+      const numbers = ["2", "4", "8"]
+      const price = ethers.utils.parseEther("1000")
+      const buyOption = 0
+      await infoHolder.addUserBuyAmountSum(roundNumber, numbers, price, 0)
+      // add amount to existing number
+      await infoHolder.addUserBuyAmountSum(roundNumber, numbers, price, 0)
+      const numberId = await helper.calculateGoongeryNumberId(numbers)
+      const userBuyAmountSum = await infoHolder.getUserBuyAmountSum(roundNumber, numberId, buyOption)
+      expect(userBuyAmountSum).to.be.eq(price.mul(2))
+    })
+
+    it("should set userBuyAmountSum given non-existing numbers", async function () {
+      const numbers = ["2", "4", "8"]
+      const price = ethers.utils.parseEther("1000")
+      const buyOption = 0
+      await infoHolder.addUserBuyAmountSum(roundNumber, numbers, price, 0)
+      const numberId = await helper.calculateGoongeryNumberId(numbers)
+      const userBuyAmountSum = await infoHolder.getUserBuyAmountSum(roundNumber, numberId, buyOption)
+      expect(userBuyAmountSum).to.be.eq(price)
+    })
   })
 
   describe("drawWinningNumbersCallback", async function () {
