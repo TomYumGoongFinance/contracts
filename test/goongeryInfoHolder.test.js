@@ -1,8 +1,7 @@
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
 const { deploy } = require("./libs/deploy")
-const { mine, currentBlock, currentBlockTimestamp } = require("./libs/rpc")
-const { approveTokens } = require("./libs/token")
+const { mine, currentBlockTimestamp } = require("./libs/rpc")
 const {
   calculateWinningNumbers,
   enterDrawingPhase
@@ -360,10 +359,13 @@ describe("GoongeryInfoHolder", async function () {
     })
   })
 
-  describe.only("getNumbersForRewardCalculation", async function () {
+  describe("getNumbersForRewardCalculation", async function () {
     it("should return given numbers when `buyOption` is 0", async function () {
       expect(
-        await infoHolder[`getNumbersForRewardCalculation(uint8[3],uint8)`]([1, 2, 3], 0)
+        await infoHolder[`getNumbersForRewardCalculation(uint8[3],uint8)`](
+          [1, 2, 3],
+          0
+        )
       ).to.be.eql([1, 2, 3])
     })
     it("should return least permutable numbers given `_buyOption` is 1", async function () {
@@ -376,17 +378,20 @@ describe("GoongeryInfoHolder", async function () {
     })
     it("should return numbers where the first number is 255 given `buyOption` is 2", async function () {
       expect(
-        await infoHolder[`getNumbersForRewardCalculation(uint8[3],uint8)`]([18, 1, 2], 2)
+        await infoHolder[`getNumbersForRewardCalculation(uint8[3],uint8)`](
+          [18, 1, 2],
+          2
+        )
       ).to.be.eql([255, 1, 2])
     })
   })
 
   describe("calculateUnmatchedReward", async function () {
-    let roundNumber = 1
-    let winningNumbers = [6, 9, 6]
+    const roundNumber = 1
+    const winningNumbers = [6, 9, 6]
+    const allocation = [60, 20, 10]
     beforeEach(async function () {
       const timestamp = await currentBlockTimestamp()
-      const allocation = [60, 20, 10]
       const info = [
         0,
         allocation,
@@ -397,20 +402,145 @@ describe("GoongeryInfoHolder", async function () {
         winningNumbers,
         0,
         0,
-        10,
+        1000,
         9
       ]
       await infoHolder.setGoongeryInfo(roundNumber, info)
     })
-    it("should return 60% of `totalGoongPrize` given no one wins exact three digits prize", async function () {})
+    it("should return 60% of `totalGoongPrize` given no one wins exact three digits prize", async function () {
+      const totalGoongPrize = ethers.utils.parseEther("100000")
+      const boughtGoong = ethers.utils.parseEther("100")
+      const winPermutableThreeNumbers = winningNumbers
+      const winLastTwoNumbers = [255, winningNumbers[1], winningNumbers[2]]
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winPermutableThreeNumbers,
+        boughtGoong,
+        1
+      )
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winLastTwoNumbers,
+        boughtGoong,
+        2
+      )
+      await infoHolder.addGoongeryInfoTotalGoongPrize(
+        roundNumber,
+        totalGoongPrize
+      )
+      const expectedUnmatchedReward = totalGoongPrize
+        .mul(allocation[0])
+        .div(10000)
+      expect(await infoHolder.calculateUnmatchedReward(roundNumber)).to.be.eq(
+        expectedUnmatchedReward
+      )
+    })
 
-    it("should return 20% of `totalGoongPrize` given no one wins permutable three digits prize", async function () {})
+    it("should return 20% of `totalGoongPrize` given no one wins permutable three digits prize", async function () {
+      const totalGoongPrize = ethers.utils.parseEther("100000")
+      const boughtGoong = ethers.utils.parseEther("100")
+      const winExactThreeNumbers = winningNumbers
+      const winLastTwoNumbers = [255, winningNumbers[1], winningNumbers[2]]
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winExactThreeNumbers,
+        boughtGoong,
+        0
+      )
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winLastTwoNumbers,
+        boughtGoong,
+        2
+      )
+      await infoHolder.addGoongeryInfoTotalGoongPrize(
+        roundNumber,
+        totalGoongPrize
+      )
+      const expectedUnmatchedReward = totalGoongPrize
+        .mul(allocation[1])
+        .div(10000)
+      expect(await infoHolder.calculateUnmatchedReward(roundNumber)).to.be.eq(
+        expectedUnmatchedReward
+      )
+    })
 
-    it("should return 10% of `totalGoongPrize` given no one wins last two digits prize", async function () {})
+    it("should return 10% of `totalGoongPrize` given no one wins last two digits prize", async function () {
+      const totalGoongPrize = ethers.utils.parseEther("100000")
+      const boughtGoong = ethers.utils.parseEther("100")
+      const winExactThreeNumbers = winningNumbers
+      const winPermutableThreeNumbers = [winningNumbers[1], winningNumbers[2], winningNumbers[0]]
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winExactThreeNumbers,
+        boughtGoong,
+        0
+      )
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winPermutableThreeNumbers,
+        boughtGoong,
+        1
+      )
+      await infoHolder.addGoongeryInfoTotalGoongPrize(
+        roundNumber,
+        totalGoongPrize
+      )
+      const expectedUnmatchedReward = totalGoongPrize
+        .mul(allocation[2])
+        .div(10000)
+      expect(await infoHolder.calculateUnmatchedReward(roundNumber)).to.be.eq(
+        expectedUnmatchedReward
+      )
+    })
 
-    it("should return 90% of `totalGoongPrize` when no one wins any prize", async function () {})
+    it("should return 90% of `totalGoongPrize` when no one wins any prize", async function () {
+      const totalGoongPrize = ethers.utils.parseEther("100000")
+      await infoHolder.addGoongeryInfoTotalGoongPrize(
+        roundNumber,
+        totalGoongPrize
+      )
+      const expectedUnmatchedReward = totalGoongPrize
+        .mul(allocation[0] + allocation[1] + allocation[2])
+        .div(10000)
+      expect(await infoHolder.calculateUnmatchedReward(roundNumber)).to.be.eq(
+        expectedUnmatchedReward
+      )
+    })
 
-    it("should return 0 when there're at least one ticket won for every prizes", async function () {})
+    it("should return 0 when there're at least one ticket won for every prizes", async function () {
+      const totalGoongPrize = ethers.utils.parseEther("100000")
+      const boughtGoong = ethers.utils.parseEther("100")
+      const winExactThreeNumbers = winningNumbers
+      const winPermutableThreeNumbers = [winningNumbers[1], winningNumbers[2], winningNumbers[0]]
+      const winLastTwoNumbers = [255, winningNumbers[1], winningNumbers[2]]
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winExactThreeNumbers,
+        boughtGoong,
+        0
+      )
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winPermutableThreeNumbers,
+        boughtGoong,
+        1
+      )
+      await infoHolder.addUserBuyAmountSum(
+        roundNumber,
+        winLastTwoNumbers,
+        boughtGoong,
+        2
+      )
+      await infoHolder.addGoongeryInfoTotalGoongPrize(
+        roundNumber,
+        totalGoongPrize
+      )
+      const expectedUnmatchedReward = 0
+      expect(await infoHolder.calculateUnmatchedReward(roundNumber)).to.be.eq(
+        expectedUnmatchedReward
+      )
+    })
   })
 
   describe("addUserBuyAmountSum", async function () {

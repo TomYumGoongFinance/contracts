@@ -123,13 +123,6 @@ interface IGoongeryInfoHolder {
     function setGoongeryInfoStatus(uint256 _roundNumber, Status _status)
         external;
 
-    function addUserBuyAmount(
-        uint256 _price,
-        uint256 roundNumber,
-        uint64 numberId,
-        GoongeryOption.Buy _buyOption
-    ) external;
-
     function getUserBuyAmountSum(
         uint256 _roundNumber,
         uint64 _numberId,

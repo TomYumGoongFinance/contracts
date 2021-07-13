@@ -234,23 +234,34 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         returns (uint256)
     {
         uint256 totalUnmatchedReward = 0;
-        // BuyOption: ExactThreeDigits
+        GoongeryInfo memory info = goongeryInfo[_roundNumber];
+
         uint64 exactThreeDigitsNumberId = GoongeryHelper
-        .calculateGoongeryNumberId(goongeryInfo[_roundNumber].winningNumbers);
+        .calculateGoongeryNumberId(info.winningNumbers);
         uint256 exactThreeDigitsTotalShared = userBuyAmountSum[_roundNumber][
             GoongeryOption.Buy.ExactThreeDigits
         ][exactThreeDigitsNumberId];
 
+
+            uint8[3] memory winningPermutableThreeNumbers
+         = getNumbersForRewardCalculation(
+            info.winningNumbers,
+            GoongeryOption.Buy.PermutableThreeDigits
+        );
         uint64 permutableThreeDigitsNumberId = GoongeryHelper
-        .calculateGoongeryNumberId(goongeryInfo[_roundNumber].winningNumbers);
+        .calculateGoongeryNumberId(winningPermutableThreeNumbers);
         uint256 permutableThreeDigitsTotalShared = userBuyAmountSum[
             _roundNumber
         ][GoongeryOption.Buy.PermutableThreeDigits][
             permutableThreeDigitsNumberId
         ];
 
+        uint8[3] memory winningLastTwoNumbers = getNumbersForRewardCalculation(
+            info.winningNumbers,
+            GoongeryOption.Buy.LastTwoDigits
+        );
         uint64 lastTwoDigitsNumberId = GoongeryHelper.calculateGoongeryNumberId(
-            goongeryInfo[_roundNumber].winningNumbers
+            winningLastTwoNumbers
         );
         uint256 lastTwoDigitsTotalShared = userBuyAmountSum[_roundNumber][
             GoongeryOption.Buy.LastTwoDigits
@@ -258,44 +269,23 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
 
         if (exactThreeDigitsTotalShared == 0) {
             totalUnmatchedReward = totalUnmatchedReward.add(
-                goongeryInfo[_roundNumber]
-                .totalGoongPrize
-                .mul(goongeryInfo[_roundNumber].allocation[0])
-                .div(10000)
+                info.totalGoongPrize.mul(info.allocation[0]).div(10000)
             );
         }
 
         if (permutableThreeDigitsTotalShared == 0) {
             totalUnmatchedReward = totalUnmatchedReward.add(
-                goongeryInfo[_roundNumber]
-                .totalGoongPrize
-                .mul(goongeryInfo[_roundNumber].allocation[1])
-                .div(10000)
+                info.totalGoongPrize.mul(info.allocation[1]).div(10000)
             );
         }
 
         if (lastTwoDigitsTotalShared == 0) {
             totalUnmatchedReward = totalUnmatchedReward.add(
-                goongeryInfo[_roundNumber]
-                .totalGoongPrize
-                .mul(goongeryInfo[_roundNumber].allocation[2])
-                .div(10000)
+                info.totalGoongPrize.mul(info.allocation[2]).div(10000)
             );
         }
 
         return totalUnmatchedReward;
-    }
-
-    function addUserBuyAmount(
-        uint256 _price,
-        uint256 roundNumber,
-        uint64 numberId,
-        GoongeryOption.Buy _buyOption
-    ) external override onlyGoongery {
-        userBuyAmountSum[roundNumber][_buyOption][numberId] = userBuyAmountSum[
-            roundNumber
-        ][_buyOption][numberId]
-        .add(_price);
     }
 
     function addUserBuyAmountSum(
