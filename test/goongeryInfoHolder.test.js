@@ -282,7 +282,6 @@ describe("GoongeryInfoHolder", async function () {
         buyOption
       )
 
-
       await infoHolder.addGoongeryInfoTotalGoongPrize(
         roundNumber,
         boughtGoongAmount1 + boughtGoongAmount2
@@ -359,5 +358,38 @@ describe("GoongeryInfoHolder", async function () {
       )
       expect(reward).to.be.eq(0)
     })
+  })
+
+  describe("getNumbersForRewardCalculation", async function () {
+    it("should return given numbers when `buyOption` is 0", async function () {})
+    it("should return least permutable numbers given `_buyOption` is 1", async function () {})
+    it("should return numbers where the first number is 255 given `buyOption` is 2", async function () {})
+  })
+
+  describe("calculateUnmatchedReward", async function () {
+    it("should return 60% of `totalGoongPrize` given no one wins exact three digits prize", async function () {})
+
+    it("should return 20% of `totalGoongPrize` given no one wins permutable three digits prize", async function () {})
+
+    it("should return 10% of `totalGoongPrize` given no one wins last two digits prize", async function () {})
+
+    it("should return 90% of `totalGoongPrize` when no one wins any prize", async function () {})
+
+    it("should return 0 when there're at least one ticket won for every prizes", async function () {})
+  })
+
+  describe("addUserBuyAmountSum", async function () {
+    it("should increase userBuyAmountSum given existing numbers", async function () {})
+
+    it("should set userBuyAmountSum given non-existing numbers", async function () {})
+  })
+
+  describe("drawWinningNumbersCallback", async function () {
+    it("should set status and winning numbers correctly", async function () {})
+
+    it("should reverted: `Draw winning numbers first` given the status is not closed", async function () {})
+  })
+  describe("calculateGoongCost", async function () {
+    it("should return correct goongCost for given goongPerTicket associated with roundNumber", async function () {})
   })
 })
