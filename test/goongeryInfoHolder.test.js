@@ -360,13 +360,48 @@ describe("GoongeryInfoHolder", async function () {
     })
   })
 
-  describe("getNumbersForRewardCalculation", async function () {
-    it("should return given numbers when `buyOption` is 0", async function () {})
-    it("should return least permutable numbers given `_buyOption` is 1", async function () {})
-    it("should return numbers where the first number is 255 given `buyOption` is 2", async function () {})
+  describe.only("getNumbersForRewardCalculation", async function () {
+    it("should return given numbers when `buyOption` is 0", async function () {
+      expect(
+        await infoHolder[`getNumbersForRewardCalculation(uint8[3],uint8)`]([1, 2, 3], 0)
+      ).to.be.eql([1, 2, 3])
+    })
+    it("should return least permutable numbers given `_buyOption` is 1", async function () {
+      expect(
+        await infoHolder[`getNumbersForRewardCalculation(uint8[3],uint8)`](
+          [2, 3, 1],
+          1
+        )
+      ).to.be.eql([1, 2, 3])
+    })
+    it("should return numbers where the first number is 255 given `buyOption` is 2", async function () {
+      expect(
+        await infoHolder[`getNumbersForRewardCalculation(uint8[3],uint8)`]([18, 1, 2], 2)
+      ).to.be.eql([255, 1, 2])
+    })
   })
 
   describe("calculateUnmatchedReward", async function () {
+    let roundNumber = 1
+    let winningNumbers = [6, 9, 6]
+    beforeEach(async function () {
+      const timestamp = await currentBlockTimestamp()
+      const allocation = [60, 20, 10]
+      const info = [
+        0,
+        allocation,
+        goongPerTicket,
+        timestamp + 200,
+        timestamp + 4200,
+        [],
+        winningNumbers,
+        0,
+        0,
+        10,
+        9
+      ]
+      await infoHolder.setGoongeryInfo(roundNumber, info)
+    })
     it("should return 60% of `totalGoongPrize` given no one wins exact three digits prize", async function () {})
 
     it("should return 20% of `totalGoongPrize` given no one wins permutable three digits prize", async function () {})

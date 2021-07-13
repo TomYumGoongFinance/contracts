@@ -12,6 +12,3 @@ node_modules
 cache
 artifacts
 secrets.json
-
-Lottery.sol
-LotteryNFT.sol
