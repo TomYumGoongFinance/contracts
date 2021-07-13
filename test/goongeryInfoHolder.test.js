@@ -469,7 +469,11 @@ describe("GoongeryInfoHolder", async function () {
       const totalGoongPrize = ethers.utils.parseEther("100000")
       const boughtGoong = ethers.utils.parseEther("100")
       const winExactThreeNumbers = winningNumbers
-      const winPermutableThreeNumbers = [winningNumbers[1], winningNumbers[2], winningNumbers[0]]
+      const winPermutableThreeNumbers = [
+        winningNumbers[1],
+        winningNumbers[2],
+        winningNumbers[0]
+      ]
       await infoHolder.addUserBuyAmountSum(
         roundNumber,
         winExactThreeNumbers,
@@ -512,7 +516,11 @@ describe("GoongeryInfoHolder", async function () {
       const totalGoongPrize = ethers.utils.parseEther("100000")
       const boughtGoong = ethers.utils.parseEther("100")
       const winExactThreeNumbers = winningNumbers
-      const winPermutableThreeNumbers = [winningNumbers[1], winningNumbers[2], winningNumbers[0]]
+      const winPermutableThreeNumbers = [
+        winningNumbers[1],
+        winningNumbers[2],
+        winningNumbers[0]
+      ]
       const winLastTwoNumbers = [255, winningNumbers[1], winningNumbers[2]]
       await infoHolder.addUserBuyAmountSum(
         roundNumber,
@@ -555,7 +563,7 @@ describe("GoongeryInfoHolder", async function () {
         timestamp + 200,
         timestamp + 4200,
         [],
-        [1,2,3],
+        [1, 2, 3],
         0,
         0,
         1000,
@@ -572,7 +580,11 @@ describe("GoongeryInfoHolder", async function () {
       // add amount to existing number
       await infoHolder.addUserBuyAmountSum(roundNumber, numbers, price, 0)
       const numberId = await helper.calculateGoongeryNumberId(numbers)
-      const userBuyAmountSum = await infoHolder.getUserBuyAmountSum(roundNumber, numberId, buyOption)
+      const userBuyAmountSum = await infoHolder.getUserBuyAmountSum(
+        roundNumber,
+        numberId,
+        buyOption
+      )
       expect(userBuyAmountSum).to.be.eq(price.mul(2))
     })
 
@@ -582,17 +594,79 @@ describe("GoongeryInfoHolder", async function () {
       const buyOption = 0
       await infoHolder.addUserBuyAmountSum(roundNumber, numbers, price, 0)
       const numberId = await helper.calculateGoongeryNumberId(numbers)
-      const userBuyAmountSum = await infoHolder.getUserBuyAmountSum(roundNumber, numberId, buyOption)
+      const userBuyAmountSum = await infoHolder.getUserBuyAmountSum(
+        roundNumber,
+        numberId,
+        buyOption
+      )
       expect(userBuyAmountSum).to.be.eq(price)
     })
   })
 
   describe("drawWinningNumbersCallback", async function () {
-    it("should set status and winning numbers correctly", async function () {})
+    const roundNumber = 1
+    const maxNumber = 9
+    const randomNumber = new Date().getTime()
 
-    it("should reverted: `Draw winning numbers first` given the status is not closed", async function () {})
+    it("should set status and winning numbers correctly", async function () {
+      const timestamp = await currentBlockTimestamp()
+      const goongeryInfo = [
+        2, // Closed
+        [6000, 2000, 1000],
+        goongPerTicket,
+        timestamp + 200,
+        timestamp + 4200,
+        [],
+        [1, 2, 3],
+        0,
+        0,
+        1000,
+        9
+      ]
+      await infoHolder.setGoongeryInfo(roundNumber, goongeryInfo)
+      await infoHolder.drawWinningNumbersCallback(
+        roundNumber,
+        randomNumber,
+        maxNumber
+      )
+      const info = await infoHolder.getGoongeryInfo(roundNumber)
+      const winningNumbers = calculateWinningNumbers(randomNumber, maxNumber)
+      expect(info.status).to.be.eq(3)
+      expect(info.winningNumbers).to.be.eql(winningNumbers)
+    })
+
+    it("should reverted: `Draw winning numbers first` given the status is not closed", async function () {
+      await expect(
+        infoHolder.drawWinningNumbersCallback(
+          roundNumber,
+          randomNumber,
+          maxNumber
+        )
+      ).to.be.revertedWith(`Draw winning numbers first`)
+    })
   })
   describe("calculateGoongCost", async function () {
-    it("should return correct goongCost for given goongPerTicket associated with roundNumber", async function () {})
+    it("should return correct goongCost for given goongPerTicket associated with roundNumber", async function () {
+      const roundNumber = 1
+      const goongeryInfo = [
+        1, // Opened
+        [6000, 2000, 1000],
+        goongPerTicket,
+        200,
+        4200,
+        [],
+        [1, 2, 3],
+        0,
+        0,
+        1000,
+        9
+      ]
+      await infoHolder.setGoongeryInfo(roundNumber, goongeryInfo)
+
+      const numberOfTickets = 50
+      expect(
+        await infoHolder.calculateGoongCost(roundNumber, numberOfTickets)
+      ).to.be.eq(goongPerTicket.mul(numberOfTickets))
+    })
   })
 })
