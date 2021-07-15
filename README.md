@@ -31,3 +31,9 @@ https://tomyumgoong-testnet.et.r.appspot.com/ Feel free to read the code. More d
 ## Resources
 
 - LINK faucet on BSC Testnet: https://linkfaucet.protofire.io/bsctest
+
+## Test fake winning numbers
+
+1. Open https://testnet.bscscan.com/address/0x900458a4ca0e2aEFD9700C72dBFadD034c7585E1#writeContract
+2. Call `fakeFulfillRandomness` function, then fill `20052259531957290227908846442226815729851806064811316307199808275164939572480` for `randomness` input and fill current roundNumber for `requestId`
+3. The winning numbers will be `[1, 2, 3]`
