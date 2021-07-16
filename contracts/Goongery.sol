@@ -325,7 +325,7 @@ contract Goongery is Ownable, Initializable {
         );
         goong.safeTransfer(msg.sender, reward);
 
-        emit ClaimReward(msg;sender, _nftId);
+        emit ClaimReward(msg.sender, _nftId);
     }
 
     function batchClaimReward(uint256 _roundNumber, uint256[] memory _nftIds)
@@ -382,7 +382,7 @@ contract Goongery is Ownable, Initializable {
 
             goongeryInfoHolder.setGoongeryInfoBurnAmount(_roundNumber, 0);
 
-            emit Burn(_roundNumber, burnAmount)
+            emit Burn(_roundNumber, burnAmount);
         }
     }
 
