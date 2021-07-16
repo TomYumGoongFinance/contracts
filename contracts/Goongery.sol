@@ -49,9 +49,26 @@ contract Goongery is Ownable, Initializable {
     IGoongeryRandomGenerator public goongeryRandomGenerator;
     // Goongery Info holder
     IGoongeryInfoHolder public goongeryInfoHolder;
-
     // Random generator for request id
     bytes32 public requestId;
+
+    event CreateNewRound(uint256 roundNumber);
+    event Burn(uint256 roundNumber, uint256 burnAmount);
+    event Buy(address indexed user, uint256 nftId);
+    event ClaimReward(address indexed user, uint256 nftId);
+    event BatchClaimReward(
+        address indexed user,
+        uint256 reward,
+        uint256[] nftIds
+    );
+    event DrawWinningNumbers(uint256 roundNumber, bytes32 requestId);
+    event DrawWinningNumbersCallBack(
+        uint256 roundNumber,
+        uint8[3] winningNumbers
+    );
+    event SetGoongeryManager(address indexed goongeryManager);
+    event SetProtocolFeeAddress(address indexed protocolFee);
+    event SetProtocolFeePercent(uint256 protocolFeePercent);
 
     modifier onlyRandomGenerator() {
         require(
@@ -71,8 +88,6 @@ contract Goongery is Ownable, Initializable {
         require(msg.sender == tx.origin, "proxy contract not allowed");
         _;
     }
-
-    event Buy(address indexed user, uint256 tokenId);
 
     function initialize(
         address _goong,
@@ -260,6 +275,7 @@ contract Goongery is Ownable, Initializable {
         );
         goongeryInfoHolder.drawWinningNumbers(roundNumber);
         requestId = goongeryRandomGenerator.getRandomNumber(roundNumber);
+        emit DrawWinningNumbers(roundNumber, requestId);
     }
 
     function drawWinningNumbersCallback(
@@ -273,6 +289,10 @@ contract Goongery is Ownable, Initializable {
                 _roundNumber,
                 _randomNumber,
                 goongeryInfo.maxNumber
+            );
+            emit DrawWinningNumbersCallBack(
+                _roundNumber,
+                goongeryInfo.winningNumbers
             );
         }
     }
@@ -304,6 +324,8 @@ contract Goongery is Ownable, Initializable {
             _buyOption
         );
         goong.safeTransfer(msg.sender, reward);
+
+        emit ClaimReward(msg;sender, _nftId);
     }
 
     function batchClaimReward(uint256 _roundNumber, uint256[] memory _nftIds)
@@ -339,6 +361,8 @@ contract Goongery is Ownable, Initializable {
             );
         }
         goong.safeTransfer(msg.sender, reward);
+
+        emit BatchClaimReward(msg.sender, reward, _nftIds);
     }
 
     function burn(uint256 _roundNumber) private {
@@ -357,6 +381,8 @@ contract Goongery is Ownable, Initializable {
             goong.transfer(BURN_ADDRESS, burnAmount);
 
             goongeryInfoHolder.setGoongeryInfoBurnAmount(_roundNumber, 0);
+
+            emit Burn(_roundNumber, burnAmount)
         }
     }
 
@@ -370,6 +396,8 @@ contract Goongery is Ownable, Initializable {
 
     function setGoongeryManager(address _goongeryManager) external onlyOwner {
         goongeryManager = _goongeryManager;
+
+        emit SetGoongeryManager(_goongeryManager);
     }
 
     function setProtocolFeeAddress(address _protocolFeeAddress)
@@ -377,6 +405,8 @@ contract Goongery is Ownable, Initializable {
         onlyOwner
     {
         protocolFeeAddress = _protocolFeeAddress;
+
+        emit SetProtocolFeeAddress(_protocolFeeAddress);
     }
 
     function setProtocolFeePercent(uint256 _protocolFeePercent)
@@ -388,5 +418,7 @@ contract Goongery is Ownable, Initializable {
             "exceed max protocol fee percent"
         );
         protocolFeePercent = _protocolFeePercent;
+
+        emit SetProtocolFeePercent(_protocolFeePercent);
     }
 }
