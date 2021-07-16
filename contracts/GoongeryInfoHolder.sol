@@ -25,8 +25,6 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         public userBuyAmountSum;
     // address => roundNumber => [tokenId]
     mapping(address => mapping(uint256 => uint256[])) public userInfoByRound;
-    // Random generator for request id
-    bytes32 public requestId;
 
     modifier onlyGoongery() {
         require(msg.sender == address(goongery), "Caller must be Goongery");
@@ -331,10 +329,6 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         require(
             goongeryInfo[roundNumber].closingTimestamp <= block.timestamp,
             "Cannot draw before close"
-        );
-        require(
-            goongeryInfo[roundNumber].status == Status.Open,
-            "Invalid status"
         );
 
         goongeryInfo[roundNumber].status = Status.Closed;
