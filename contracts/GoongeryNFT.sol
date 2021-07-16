@@ -20,6 +20,8 @@ contract GoongeryNFT is ERC721, Ownable {
 
     constructor() public ERC721("Goongery Ticket", "GGT") {}
 
+    event Created(address indexed player, uint256 nftId);
+
     function create(
         address player,
         uint8[3] memory _lotteryNumbers,
@@ -43,6 +45,8 @@ contract GoongeryNFT is ERC721, Ownable {
             googeryInfo[itemId] = _lotteryNumbers;
             googeryInfo[itemId][0] = ~uint8(0);
         }
+
+        emit Created(player, itemId);
 
         return itemId;
     }
