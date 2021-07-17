@@ -762,9 +762,7 @@ describe("Goongery", async function () {
 
       const reward = buyingCost.mul(20).div(100)
 
-      await goongery
-        .batchClaimReward(roundNumber, nftIds)
-        .then((tx) => tx.wait())
+      await goongery.batchClaimReward(nftIds).then((tx) => tx.wait())
 
       const balance = await goong.balanceOf(owner.address)
       expect(initialBalance.sub(buyingCost).add(reward)).to.be.eq(balance)
@@ -786,7 +784,7 @@ describe("Goongery", async function () {
       )
 
       await expect(
-        goongery.connect(signers[1]).batchClaimReward(roundNumber, nftIds)
+        goongery.connect(signers[1]).batchClaimReward(nftIds)
       ).to.be.revertedWith(`Caller must own nft`)
     })
 
@@ -805,11 +803,30 @@ describe("Goongery", async function () {
         roundNumber
       )
 
-      await goongery.batchClaimReward(roundNumber, nftIds)
+      await goongery.batchClaimReward(nftIds)
 
-      await expect(
-        goongery.batchClaimReward(roundNumber, nftIds)
-      ).to.be.revertedWith(`Nft is already claimed`)
+      await expect(goongery.batchClaimReward(nftIds)).to.be.revertedWith(
+        `Nft is already claimed`
+      )
+    })
+
+    it("should reverted: `Winning numbers are not chosen yet` given corresponding round for nft haven't drawn winning numbers yet", async function () {
+      const buyOption = 1
+      const roundNumber = 1
+
+      const numbers = _winningNumbers
+      await goongery.buy(numberOfTickets, numbers, buyOption)
+
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+
+      const nftIds = await infoHolder.getUserTokenIdsByRound(
+        owner.address,
+        roundNumber
+      )
+
+      await expect(goongery.batchClaimReward(nftIds)).to.be.revertedWith(
+        `Winning numbers are not chosen yet`
+      )
     })
   })
 })
