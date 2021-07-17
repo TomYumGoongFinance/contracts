@@ -26,7 +26,8 @@ contract Goongery is Ownable, Initializable {
     // Maximum team fee percentage to be adjusted
     uint64 public constant MAX_TEAM_FEE_PERCENTAGE = 2000;
     // Minimum seconds allowed to buy ticket per round
-    uint256 public constant MIN_BUY_TICKET_TIME = 1 hours;
+    // Todo: Adjust to 1 hour when deploy to mainnet
+    uint256 public constant MIN_BUY_TICKET_TIME = 1 minutes;
     // Minimum goong per ticket
     uint256 public constant MIN_GOONG_PER_TICKET = 1 ether;
     // Minimum number for each digit
@@ -328,30 +329,24 @@ contract Goongery is Ownable, Initializable {
         emit ClaimReward(msg.sender, _nftId);
     }
 
-    function batchClaimReward(uint256 _roundNumber, uint256[] memory _nftIds)
-        external
-        notContract
-    {
-        GoongeryInfo memory goongeryInfo = goongeryInfoHolder.getGoongeryInfo(
-            _roundNumber
-        );
-        require(
-            goongeryInfo.closingTimestamp <= block.timestamp,
-            "Wait for winning numbers drawn"
-        );
-        require(
-            goongeryInfo.status == Status.Completed,
-            "Winning numbers are not chosen yet"
-        );
-
+    function batchClaimReward(uint256[] memory _nftIds) external notContract {
         uint256 reward;
         for (uint256 i = 0; i < _nftIds.length; i++) {
             uint256 _nftId = _nftIds[i];
-            require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
+            uint256 _roundNumber = nft.getRoundNumber(_nftId);
+            GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
+
+            GoongeryInfo memory goongeryInfo = goongeryInfoHolder
+            .getGoongeryInfo(_roundNumber);
+
             require(!nft.getClaimStatus(_nftId), "Nft is already claimed");
+            require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
+            require(
+                goongeryInfo.status == Status.Completed,
+                "Winning numbers are not chosen yet"
+            );
 
             nft.claimReward(_nftId);
-            GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
             reward = reward.add(
                 goongeryInfoHolder.calculateReward(
                     _nftId,
@@ -360,8 +355,8 @@ contract Goongery is Ownable, Initializable {
                 )
             );
         }
-        goong.safeTransfer(msg.sender, reward);
 
+        goong.safeTransfer(msg.sender, reward);
         emit BatchClaimReward(msg.sender, reward, _nftIds);
     }
 
