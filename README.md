@@ -20,11 +20,11 @@ https://tomyumgoong-testnet.et.r.appspot.com/ Feel free to read the code. More d
 - MasterChef: `0x4e5e015d3463b7c23e8638aa8ad7c5b8fd15479f`
 - Timelock: `0x353a40551e1629bcd88140042ad2bd5d9747e6ec`
 - Busd: `0xf74C427EC673497b84Fd6FD0800264FDaf6A2Ff4`
-- Goongery: `0xC5400De1cE8dF2dA51377e558c7CcB0dF1463598`
+- Goongery: `0x49a6Da9683fda220c381cba49D3D8733Ae36ada9`
 - Goongery Random Generator: `0x307cb563645bC69c1c71aB50ED9288F042d3D556`
-- Goongery NFT: `0xcf158CE799f398623EB1149434666b339067f43D`
-- Goongery Helper: `0x254E063Cf4f381099e7265D01c59343d0A97E0c3`
-- Goongery Info Holder: `0xE4B1cC4ECaB2d7cBE20EaCb67023dd4827F31892`
+- Goongery NFT: `0xbd65C6832984ed1a2629616d98180d40891Bfd5D`
+- Goongery Helper: `0x96229c4BfAA55BEF6fc37342E3eE1CC097c4f51e`
+- Goongery Info Holder: `0xc21052614fbd73113F0393127cB210c6c4DD977C`
 - Fake Goongery Random Generator: `0x900458a4ca0e2aEFD9700C72dBFadD034c7585E1`
 
 ## Resources
