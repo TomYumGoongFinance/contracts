@@ -142,7 +142,6 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         external
         view
         override
-        onlyGoongery
         returns (uint256[] memory)
     {
         return userInfo[user];
