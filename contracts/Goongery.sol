@@ -138,6 +138,12 @@ contract Goongery is Ownable, Initializable {
             goongeryInfo.closingTimestamp <= block.timestamp,
             "previous round must be completed"
         );
+        if (roundNumber > 0) {
+            require(
+                goongeryInfo.status == Status.Completed,
+                "winning number from previous round must be announced"
+            );
+        }
         require(
             _closingTimestamp > _openingTimestamp + MIN_BUY_TICKET_TIME,
             "closingTimestamp must be greater than openingTimestamp + MIN_BUY_TICKET_TIME"

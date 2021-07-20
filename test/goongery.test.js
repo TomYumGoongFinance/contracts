@@ -67,7 +67,7 @@ describe("Goongery", async function () {
       .then((tx) => tx.wait)
   })
 
-  describe("createNewRound", async function () {
+  describe.only("createNewRound", async function () {
     it("should create goongery info and increment roundNumber by 1 when pass all validations", async () => {
       const _winningNumbers = [255, 255, 255]
       let {
@@ -195,6 +195,7 @@ describe("Goongery", async function () {
 
     it("should reverted: `closingTimestamp must be greater than openingTimestamp + MIN_BUY_TICKET_TIME` given the closingTimestamp <=  _openingTimestamp + MIN_BUY_TICKET_TIME", async function () {
       const timestamp = await currentBlockTimestamp()
+      const MIN_BUY_TICKET_TIME = await goongery.MIN_BUY_TICKET_TIME()
       await expect(
         createNewRound(goongery, {
           openingTimestamp: timestamp + 2,
@@ -207,7 +208,7 @@ describe("Goongery", async function () {
       await expect(
         createNewRound(goongery, {
           openingTimestamp: timestamp + 4,
-          closingTimestamp: timestamp + 1800
+          closingTimestamp: timestamp + MIN_BUY_TICKET_TIME.toNumber()
         })
       ).to.be.revertedWith(
         "closingTimestamp must be greater than openingTimestamp + MIN_BUY_TICKET_TIME"
@@ -223,6 +224,20 @@ describe("Goongery", async function () {
       await expect(createNewRound(goongery)).to.be.revertedWith(
         "previous round must be completed"
       )
+    })
+
+    it.only("should reverted: `winning number from previous round must be announced` given the previous round has not announced winning numbers yet", async function () {
+      await createNewRound(goongery)
+
+      await mine(4000)
+
+      await expect(createNewRound(goongery)).to.be.revertedWith(
+        "winning number from previous round must be announced"
+      )
+
+      await drawWinningNumbers(goongery)
+
+      await createNewRound(goongery)
     })
 
     it("should reverted: `total allocation must be equal to 10000 - burn percentage` given the total allocations plus burn percentage is not equal to 10000", async function () {
