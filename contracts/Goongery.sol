@@ -155,8 +155,8 @@ contract Goongery is Ownable, Initializable {
         }
 
         require(
-            totalAllocation == 10000 - _burnPercentage,
-            "total allocation must be equal to 10000 - burn percentage"
+            totalAllocation == 10000,
+            "total allocation must be equal to 10000"
         );
 
         // Burn all goong from previous round
@@ -224,7 +224,7 @@ contract Goongery is Ownable, Initializable {
             goongeryInfoHolder.setGoongeryInfoStatus(roundNumber, Status.Open);
         }
 
-        uint256 totalGoongAmount = goongeryInfoHolder.calculateGoongCost(
+        uint256 spentGoong = goongeryInfoHolder.calculateGoongCost(
             roundNumber,
             _numberOfTickets
         );
@@ -232,20 +232,21 @@ contract Goongery is Ownable, Initializable {
         uint256 tokenId = nft.create(
             msg.sender,
             _numbers,
-            totalGoongAmount,
+            spentGoong,
             roundNumber,
             _buyOption
         );
 
-        uint256 _burnAmount = totalGoongAmount
-        .mul(goongeryInfo.burnPercentage)
-        .div(10000);
+        uint256 _burnAmount = spentGoong.mul(goongeryInfo.burnPercentage).div(
+            10000
+        );
+        uint256 _prizeAmount = spentGoong.sub(_burnAmount);
 
         goongeryInfoHolder.addGoongeryInfoTokenId(roundNumber, tokenId);
         goongeryInfoHolder.addGoongeryInfoBurnAmount(roundNumber, _burnAmount);
         goongeryInfoHolder.addGoongeryInfoTotalGoongPrize(
             roundNumber,
-            totalGoongAmount
+            _prizeAmount
         );
         goongeryInfoHolder.addUserTokenIdsByRound(
             msg.sender,
@@ -258,11 +259,11 @@ contract Goongery is Ownable, Initializable {
         goongeryInfoHolder.addUserBuyAmountSum(
             roundNumber,
             _numbers,
-            totalGoongAmount,
+            spentGoong,
             _buyOption
         );
 
-        goong.safeTransferFrom(msg.sender, address(this), totalGoongAmount);
+        goong.safeTransferFrom(msg.sender, address(this), spentGoong);
 
         emit Buy(msg.sender, tokenId);
     }

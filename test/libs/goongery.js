@@ -4,7 +4,7 @@ const { ethers } = require("hardhat")
 async function createNewRound(goongery, _args = {}) {
   const timestamp = await currentBlockTimestamp()
 
-  let allocation = _args.allocation || ["6000", "2000", "1000"]
+  let allocation = _args.allocation || ["6000", "3000", "1000"]
   let goongPerTicket = _args.goongPerTicket || ethers.utils.parseEther("100")
   let burnPercentage = _args.burnPercentage || 1000
   let openingTimestamp = _args.openingTimestamp || timestamp + 200
@@ -51,9 +51,10 @@ async function drawWinningNumbers(goongery, args = {}) {
     .then((tx) => tx.wait())
   const requestId = await goongery.requestId()
   const randomness = args.randomness || 10000
+  const roundNumber = args.roundNumber || 1
 
   return goongery
-    .drawWinningNumbersCallback(1, requestId, randomness)
+    .drawWinningNumbersCallback(roundNumber, requestId, randomness)
     .then((tx) => tx.wait())
 }
 
