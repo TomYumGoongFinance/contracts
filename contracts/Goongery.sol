@@ -96,7 +96,7 @@ contract Goongery is Ownable, Initializable {
         address _nft,
         address _goongeryInfoHolder,
         address _protocolFeeAddress
-    ) external initializer onlyOwner() {
+    ) external initializer onlyOwner {
         goong = IERC20(_goong);
         goongeryRandomGenerator = IGoongeryRandomGenerator(
             _goongRandomGenerator
@@ -344,7 +344,7 @@ contract Goongery is Ownable, Initializable {
             GoongeryOption.Buy _buyOption = nft.getBuyOption(_nftId);
 
             GoongeryInfo memory goongeryInfo = goongeryInfoHolder
-            .getGoongeryInfo(_roundNumber);
+                .getGoongeryInfo(_roundNumber);
 
             require(!nft.getClaimStatus(_nftId), "Nft is already claimed");
             require(nft.ownerOf(_nftId) == msg.sender, "Caller must own nft");
@@ -373,9 +373,9 @@ contract Goongery is Ownable, Initializable {
         );
         if (goongeryInfo.burnAmount > 0) {
             uint256 protocolFeeAmount = goongeryInfo
-            .burnAmount
-            .mul(protocolFeePercent)
-            .div(10000);
+                .burnAmount
+                .mul(protocolFeePercent)
+                .div(10000);
 
             uint256 burnAmount = goongeryInfo.burnAmount.sub(protocolFeeAmount);
 

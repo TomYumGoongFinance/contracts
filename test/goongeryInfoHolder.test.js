@@ -603,6 +603,37 @@ describe("GoongeryInfoHolder", async function () {
     })
   })
 
+  describe("drawWinningNumbers", async function () {
+    const roundNumber = 1
+    const maxNumber = 9
+    const randomNumber = new Date().getTime()
+    it("should not be able to draw twice in the same round", async function () {
+      const timestamp = await currentBlockTimestamp()
+      const goongeryInfo = [
+        2, // Closed
+        [6000, 2000, 1000],
+        goongPerTicket,
+        timestamp + 200,
+        timestamp + 4200,
+        [],
+        [1, 2, 3],
+        0,
+        0,
+        1000,
+        9
+      ]
+      await infoHolder.setGoongeryInfo(roundNumber, goongeryInfo)
+      await mine(4200)
+      await infoHolder.drawWinningNumbers(roundNumber)
+      await infoHolder.drawWinningNumbersCallback(
+        roundNumber,
+        randomNumber,
+        maxNumber
+      )
+      await expect(infoHolder.drawWinningNumbers(roundNumber)).to.be.revertedWith('Already drawn')
+    })
+  })
+
   describe("drawWinningNumbersCallback", async function () {
     const roundNumber = 1
     const maxNumber = 9

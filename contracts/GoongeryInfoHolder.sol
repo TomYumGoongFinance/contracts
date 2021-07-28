@@ -167,8 +167,8 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         uint256 _burnAmount
     ) external override onlyGoongery {
         goongeryInfo[_roundNumber].burnAmount = goongeryInfo[_roundNumber]
-        .burnAmount
-        .add(_burnAmount);
+            .burnAmount
+            .add(_burnAmount);
     }
 
     function addGoongeryInfoTotalGoongPrize(
@@ -176,8 +176,8 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         uint256 _goongAmount
     ) external override onlyGoongery {
         goongeryInfo[_roundNumber].totalGoongPrize = goongeryInfo[_roundNumber]
-        .totalGoongPrize
-        .add(_goongAmount);
+            .totalGoongPrize
+            .add(_goongAmount);
     }
 
     function getAllocation(uint256 _roundNumber)
@@ -234,19 +234,18 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         GoongeryInfo memory info = goongeryInfo[_roundNumber];
 
         uint64 exactThreeDigitsNumberId = GoongeryHelper
-        .calculateGoongeryNumberId(info.winningNumbers);
+            .calculateGoongeryNumberId(info.winningNumbers);
         uint256 exactThreeDigitsTotalShared = userBuyAmountSum[_roundNumber][
             GoongeryOption.Buy.ExactThreeDigits
         ][exactThreeDigitsNumberId];
 
-
-            uint8[3] memory winningPermutableThreeNumbers
-         = getNumbersForRewardCalculation(
-            info.winningNumbers,
-            GoongeryOption.Buy.PermutableThreeDigits
-        );
+        uint8[3]
+            memory winningPermutableThreeNumbers = getNumbersForRewardCalculation(
+                info.winningNumbers,
+                GoongeryOption.Buy.PermutableThreeDigits
+            );
         uint64 permutableThreeDigitsNumberId = GoongeryHelper
-        .calculateGoongeryNumberId(winningPermutableThreeNumbers);
+            .calculateGoongeryNumberId(winningPermutableThreeNumbers);
         uint256 permutableThreeDigitsTotalShared = userBuyAmountSum[
             _roundNumber
         ][GoongeryOption.Buy.PermutableThreeDigits][
@@ -308,8 +307,7 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
 
         userBuyAmountSum[roundNumber][_buyOption][numberId] = userBuyAmountSum[
             roundNumber
-        ][_buyOption][numberId]
-        .add(_price);
+        ][_buyOption][numberId].add(_price);
     }
 
     function getUserBuyAmountSum(
@@ -328,6 +326,10 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         require(
             goongeryInfo[roundNumber].closingTimestamp <= block.timestamp,
             "Cannot draw before close"
+        );
+        require(
+            goongeryInfo[roundNumber].status != Status.Completed,
+            "Already drawn"
         );
 
         goongeryInfo[roundNumber].status = Status.Closed;

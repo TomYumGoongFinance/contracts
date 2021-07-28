@@ -129,7 +129,7 @@ describe("Goongery", async function () {
 
     it("should not burn goong when no one burns in the current round", async function () {})
 
-    it.only("should burn reward from previous round ", async function () {
+    it("should burn reward from previous round ", async function () {
       const {
         goongPerTicket,
         burnPercentage,
@@ -426,6 +426,28 @@ describe("Goongery", async function () {
       await goongery.drawWinningNumbers().then((tx) => tx.wait())
       const info = await infoHolder.goongeryInfo(1)
       expect(info.status).to.be.eq(2)
+    })
+
+    it.only("should not be able to draw twice in the same round", async function () {
+      const { openingTimestamp, closingTimestamp } = await createNewRound(
+        goongery
+      )
+
+      const numberOfTickets = 2
+      const numbers = [1, 2, 3]
+      const buyOption = 0
+
+      await approveTokens([goong], goongery.address)
+      await enterBuyingPhase(openingTimestamp)
+      await goongery
+        .buy(numberOfTickets, numbers, buyOption)
+        .then((tx) => tx.wait())
+
+      await enterDrawingPhase(openingTimestamp, closingTimestamp)
+      await drawWinningNumbers(goongery, { randomness: 10000 })
+      await expect(goongery.drawWinningNumbers()).to.be.revertedWith(
+        "Already drawn"
+      )
     })
   })
 
