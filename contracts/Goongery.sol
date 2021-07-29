@@ -316,15 +316,13 @@ contract Goongery is Ownable, Initializable {
     ) external onlyRandomGenerator {
         GoongeryInfo memory goongeryInfo = getCurrentGoongeryInfo();
         if (_requestId == requestId) {
-            goongeryInfoHolder.drawWinningNumbersCallback(
-                _roundNumber,
-                _randomNumber,
-                goongeryInfo.maxNumber
-            );
-            emit DrawWinningNumbersCallBack(
-                _roundNumber,
-                goongeryInfo.winningNumbers
-            );
+            uint8[3] memory winningNumbers = goongeryInfoHolder
+                .drawWinningNumbersCallback(
+                    _roundNumber,
+                    _randomNumber,
+                    goongeryInfo.maxNumber
+                );
+            emit DrawWinningNumbersCallBack(_roundNumber, winningNumbers);
         }
     }
 

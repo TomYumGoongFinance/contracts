@@ -62,7 +62,7 @@ interface IGoongeryInfoHolder {
         uint256 _roundNumber,
         uint256 _randomNumber,
         uint256 maxNumber
-    ) external;
+    ) external returns (uint8[3] memory);
 
     function addTokenIdForUserInfo(address owner, uint256 tokenId) external;
 

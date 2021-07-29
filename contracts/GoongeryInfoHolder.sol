@@ -360,7 +360,7 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
         uint256 _roundNumber,
         uint256 _randomNumber,
         uint256 maxNumber
-    ) external override onlyGoongery {
+    ) external override onlyGoongery returns (uint8[3] memory) {
         require(
             goongeryInfo[_roundNumber].status == Status.Closed,
             "Draw winning numbers first"
@@ -370,6 +370,8 @@ contract GoongeryInfoHolder is IGoongeryInfoHolder {
             _randomNumber,
             maxNumber
         );
+
+        return goongeryInfo[_roundNumber].winningNumbers;
     }
 
     function _extract(uint256 _randomNumber, uint256 maxNumber)
