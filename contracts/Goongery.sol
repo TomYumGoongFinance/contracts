@@ -212,6 +212,8 @@ contract Goongery is Ownable, Initializable {
 
         roundNumber = roundNumber.add(1);
         goongeryInfoHolder.setGoongeryInfo(roundNumber, info);
+
+        emit CreateNewRound(roundNumber);
     }
 
     function buy(
