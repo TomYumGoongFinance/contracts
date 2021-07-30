@@ -409,14 +409,6 @@ contract Goongery is Ownable, Initializable {
         }
     }
 
-    // Todo: Remove when done test
-    function setGoongeryRandomGenerator(address _randomGenerator)
-        external
-        onlyOwner
-    {
-        goongeryRandomGenerator = IGoongeryRandomGenerator(_randomGenerator);
-    }
-
     function setGoongeryManager(address _goongeryManager) external onlyOwner {
         goongeryManager = _goongeryManager;
 
