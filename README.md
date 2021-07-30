@@ -16,6 +16,7 @@ https://tomyumgoong-testnet.et.r.appspot.com/ Feel free to read the code. More d
 - Goongery NFT: `0x8D7BdC021e0e3C49Ee1c1718c62ea7E293fa0bd2`
 - Goongery Helper: `0x1C1F53c20145271577f69D39306ccA7A2519FffB`
 - Fake Goongery Random Generator: `0x3e8BdF09cEdb62A537b7B5b9173945D2B02175f0`
+- Goongery Info Holder: `0x3e8BdF09cEdb62A537b7B5b9173945D2B02175f0`
 
 ### Bsc Testnet
 
