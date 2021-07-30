@@ -11,6 +11,11 @@ https://tomyumgoong-testnet.et.r.appspot.com/ Feel free to read the code. More d
 - GoongToken: `0x2afAB709fEAC97e2263BEd78d94aC2951705dB50`
 - MasterChef: `0xdee8271179DCFB82e488c46060f022C48E61F327`
 - Timelock: `0x0b38D64b22D3c968A3aE26B4C3C56dE3d5699831`
+- Goongery: `0x5350F91B76f9F2D4016a4F5A7828B81980Ea441E`
+- Goongery Random Generator: `0xAa81f64EF0BE74F84e6CAd5FEEfb050eaa6788ce`
+- Goongery NFT: `0x8D7BdC021e0e3C49Ee1c1718c62ea7E293fa0bd2`
+- Goongery Helper: `0x1C1F53c20145271577f69D39306ccA7A2519FffB`
+- Fake Goongery Random Generator: `0x3e8BdF09cEdb62A537b7B5b9173945D2B02175f0`
 
 ### Bsc Testnet
 
