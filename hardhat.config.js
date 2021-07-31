@@ -1,16 +1,18 @@
-require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-etherscan");
-require('hardhat-spdx-license-identifier');
-require("hardhat-gas-reporter");
-const { privateKey, apiKey } = require('./secrets.json')
+require("@nomiclabs/hardhat-waffle")
+require("@nomiclabs/hardhat-etherscan")
+require("hardhat-spdx-license-identifier")
+require("hardhat-gas-reporter")
+require("hardhat-contract-sizer")
+
+const { privateKey, apiKey } = require("./secrets.json")
 
 task("accounts", "Prints the list of accounts", async (args, hre) => {
-  const accounts = await hre.ethers.getSigners();
+  const accounts = await hre.ethers.getSigners()
 
   for (const account of accounts) {
-    console.log(account.address);
+    console.log(account.address)
   }
-});
+})
 
 module.exports = {
   networks: {
@@ -35,12 +37,17 @@ module.exports = {
     hardhat: {
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
-      allowUnlimitedContractSize: true,
+      allowUnlimitedContractSize: true
     }
   },
   spdxLicenseIdentifier: {
     overwrite: true,
-    runOnCompile: true,
+    runOnCompile: true
+  },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: false,
+    disambiguatePaths: false
   },
   etherscan: {
     // Your API key for Etherscan
@@ -48,7 +55,7 @@ module.exports = {
     apiKey
   },
   gasReporter: {
-    currency: 'USD',
+    currency: "USD",
     gasPrice: 5,
     enabled: false
   },
@@ -56,14 +63,16 @@ module.exports = {
     compilers: [
       {
         version: "0.6.12"
-      }, {
+      },
+      {
         version: "0.5.16"
-      }, {
+      },
+      {
         version: "0.5.0"
-      }, {
+      },
+      {
         version: "0.4.18"
       }
     ]
   }
-};
-
+}
