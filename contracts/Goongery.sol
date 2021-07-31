@@ -24,6 +24,7 @@ import "./interfaces/IGoongeryInfoHolder.sol";
 //
 // Website: https://tomyumgoong.finance
 // Telegram: https://t.me/tomyumgoong_finance
+// Twitter: https://twitter.com/tomyumgoongf
 //
 //     ____________  \
 //                 \ |
@@ -47,8 +48,7 @@ contract Goongery is Ownable, Initializable {
     // Maximum team fee percentage to be adjusted
     uint64 public constant MAX_TEAM_FEE_PERCENTAGE = 2000;
     // Minimum seconds allowed to buy ticket per round
-    // Todo: Adjust to 1 hour when deploy to mainnet
-    uint256 public constant MIN_BUY_TICKET_TIME = 1 minutes;
+    uint256 public constant MIN_BUY_TICKET_TIME = 1 hours;
     // Minimum goong per ticket
     uint256 public constant MIN_GOONG_PER_TICKET = 1 ether;
     // Minimum number for each digit
