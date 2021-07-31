@@ -36,6 +36,7 @@ Testnet: https://testnet.tomyumgoong.finance
 ## Resources
 
 - LINK faucet on BSC Testnet: https://linkfaucet.protofire.io/bsctest
+- LINK PegSwap: https://pegswap.chain.link/
 
 ## Test fake winning numbers
 
