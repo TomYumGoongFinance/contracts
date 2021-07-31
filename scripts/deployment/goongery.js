@@ -8,13 +8,19 @@ async function initialize(
   randomGeneratorAddress,
   nftAddress,
   infoHolderAddress,
-  goongeryFeeAddress,
+  goongeryFeeAddress
 ) {
   const Goongery = await hre.ethers.getContractFactory("Goongery")
   const goongery = await Goongery.attach(goongeryAddress)
 
   const tx = await goongery
-    .initialize(GOONG, randomGeneratorAddress, nftAddress, infoHolderAddress, goongeryFeeAddress)
+    .initialize(
+      GOONG,
+      randomGeneratorAddress,
+      nftAddress,
+      infoHolderAddress,
+      goongeryFeeAddress
+    )
     .then((tx) => tx.wait())
 
   console.log("Transaction completed:", tx.transactionHash)
