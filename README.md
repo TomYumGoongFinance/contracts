@@ -1,6 +1,7 @@
 # TomYumGoong Finance
 
-https://tomyumgoong-testnet.et.r.appspot.com/ Feel free to read the code. More details coming soon.
+Mainnet: https://tomyumgoong.finance
+Testnet: https://testnet.tomyumgoong.finance
 
 ## Deployed Contracts / Hash
 
